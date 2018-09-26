@@ -11,6 +11,11 @@ from .serializers import (
 
 
 class RegistrationAPIView(APIView):
+
+    """
+    post:
+    Register a user to the platform.
+    """
     # Allow any user (authenticated or not) to hit this endpoint.
     permission_classes = (AllowAny,)
     renderer_classes = (UserJSONRenderer,)
@@ -30,6 +35,12 @@ class RegistrationAPIView(APIView):
 
 
 class LoginAPIView(APIView):
+
+    """
+    post:
+    Login a registered user.
+    """
+
     permission_classes = (AllowAny,)
     renderer_classes = (UserJSONRenderer,)
     serializer_class = LoginSerializer
@@ -48,6 +59,13 @@ class LoginAPIView(APIView):
 
 
 class UserRetrieveUpdateAPIView(RetrieveUpdateAPIView):
+    """
+    retrieve:
+    fetch a user's details.
+    update:
+    Modify a user's details.
+
+    """
     permission_classes = (IsAuthenticated,)
     renderer_classes = (UserJSONRenderer,)
     serializer_class = UserSerializer
