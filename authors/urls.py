@@ -20,12 +20,14 @@ from rest_framework_swagger.views import get_swagger_view
 
 schema_view = get_swagger_view(title="Authors Haven API ")
 
+
 urlpatterns = [
     path('admin/', admin.site.urls),
 
     path('api/', include('authors.apps.authentication.urls', namespace='authentication')),
     path('swagger-docs/', schema_view),
-    path('coreapi-docs/', include_docs_urls(title='Authors Haven API')),
+    path('', include_docs_urls(title='Authors Haven API')),
     
+
 ]
 
