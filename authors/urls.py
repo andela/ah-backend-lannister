@@ -13,8 +13,9 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
-from django.urls import include,path
 from django.contrib import admin
+from django.urls import include, path
+from django.views.generic.base import RedirectView
 from rest_framework.documentation import include_docs_urls
 from rest_framework_swagger.views import get_swagger_view
 
@@ -24,10 +25,11 @@ schema_view = get_swagger_view(title="Authors Haven API ")
 urlpatterns = [
     path('admin/', admin.site.urls),
 
-    path('api/', include('authors.apps.authentication.urls', namespace='authentication')),
+    path('api/', include('authors.apps.authentication.urls',
+                         namespace='authentication')),
+
+    path('', RedirectView.as_view(url='coreapi-docs/'), name='index'),
     path('swagger-docs/', schema_view),
-    path('', include_docs_urls(title='Authors Haven API')),
-    
+    path('coreapi-docs/', include_docs_urls(title='Authors Haven API')),
 
 ]
-
