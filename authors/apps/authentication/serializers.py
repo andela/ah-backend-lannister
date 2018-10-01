@@ -1,5 +1,8 @@
-from django.contrib.auth import authenticate
+import re
 
+import jwt
+from django.contrib.auth import authenticate
+from django.shortcuts import get_object_or_404
 from rest_framework import serializers
 
 from .models import User
@@ -152,3 +155,29 @@ class UserSerializer(serializers.ModelSerializer):
         instance.save()
 
         return instance
+
+
+
+class PasswordResetSerializer(serializers.Serializer):
+    email = serializers.EmailField(required=False)
+    message = serializers.EmailField(max_length=255, required=False)
+    token = serializers.EmailField(max_length=255, required=False)
+
+    class Meta:
+        model = User
+        fields = ('token')
+
+    def validate(self, data):
+        email = data.get('email', None)
+        if email is None:
+            raise serializers.ValidationError(
+                'An email is required to reset password.'
+            )
+        user = get_object_or_404(User, email=email)
+        # user.is_active=False
+        
+        # return token here
+        return {
+            'email': user,
+            'token':user.token(0.0208333),
+        }
