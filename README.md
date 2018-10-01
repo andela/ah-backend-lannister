@@ -1,5 +1,6 @@
-[![Build Status](https://travis-ci.org/andela/ah-backend-lannister.svg?branch=ch-add-CI-badges-160617662)](https://travis-ci.org/andela/ah-backend-lannister)  [![Coverage Status](https://coveralls.io/repos/github/andela/ah-backend-lannister/badge.svg?branch=ch-add-CI-badges-160617662)](https://coveralls.io/github/andela/ah-backend-lannister?branch=ch-add-CI-badges-160617662)
-<a href="https://codeclimate.com/github/andela/ah-backend-lannister/maintainability"><img src="https://api.codeclimate.com/v1/badges/d9651f05cd8ef3995145/maintainability" /></a>
+[![Build Status](https://travis-ci.org/andela/ah-backend-lannister.svg?branch=develop)](https://travis-ci.org/andela/ah-backend-lannister)
+[![Coverage Status](https://coveralls.io/repos/github/andela/ah-backend-lannister/badge.svg?branch=develop)](https://coveralls.io/github/andela/ah-backend-lannister?branch=develop)
+[![Maintainability](https://api.codeclimate.com/v1/badges/f00667f01cde052f6a89/maintainability)](https://codeclimate.com/github/andela/ah-backend-lannister/maintainability)
 
 Authors Haven - A Social platform for the creative at heart.
 =======
