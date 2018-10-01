@@ -51,3 +51,9 @@ class BaseTest:
                 "password": self.password
             }
         }
+
+        self.user_password_reset_data = {
+            'user': {
+                'password': self.password,
+            }
+        }

@@ -1,4 +1,4 @@
-{
+  {
     "name": "ah-backend-lannister",
     "scripts": {},
     "env": {
@@ -43,6 +43,9 @@
       },
       "EMAIL_PORT":{
         "required": true
+      },
+      "SENDGRID_API_KEY": {
+        "required": true
       }
     },
     "formation": {
@@ -59,3 +62,4 @@
       }
     ]
   }
+
