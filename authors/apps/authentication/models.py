@@ -7,7 +7,7 @@ from django.contrib.auth.models import (
     AbstractBaseUser, BaseUserManager, PermissionsMixin
 )
 from django.db import models
-
+from authors.settings import defaults
 class UserManager(BaseUserManager):
     """
     Django requires that custom users define their own Manager class. By
@@ -116,5 +116,11 @@ class User(AbstractBaseUser, PermissionsMixin):
         the user's real name, we return their username instead.
         """
         return self.username
-
-
+    
+    def token(self, x=1):
+        payload = {
+            "email": self.email,
+            "exp": datetime.now() + timedelta(days=x)
+        }
+        jwt_token = jwt.encode(payload, defaults.SECRET_KEY)
+        return jwt_token.decode("utf-8")    
