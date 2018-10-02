@@ -67,7 +67,8 @@ class LoginSerializer(serializers.Serializer):
     email = serializers.CharField(max_length=255)
     username = serializers.CharField(max_length=255, read_only=True)
     password = serializers.CharField(max_length=128, write_only=True)
-    token = serializers.CharField(read_only=True, max_length=255)
+    token = serializers.CharField(max_length=255, read_only=True)
+
 
     def validate(self, data):
         # The `validate` method is where we make sure that the current
@@ -102,7 +103,7 @@ class LoginSerializer(serializers.Serializer):
         # `authenticate` will return `None`. Raise an exception in this case.
         if user is None:
             raise serializers.ValidationError(
-                "wrong password or email"
+                'A user with this email and password was not found.'
             )
 
         # Django provides a flag on our `User` model called `is_active`. The
@@ -131,14 +132,13 @@ class LoginSerializer(serializers.Serializer):
         return {
             'email': user.email,
             'username': user.username,
-            'token': user.token
-
+            'token':user.token,            
         }
 
 class UserSerializer(serializers.ModelSerializer):
     """Handles serialization and deserialization of User objects."""
 
-    # Passwords must be at least 8 characters, but no more than 128
+    # Passwords must be at least 8 characters, but no more than 128 
     # characters. These values are the default provided by Django. We could
     # change them, but that would create extra work while introducing no real
     # benefit, so let's just stick with the defaults.
@@ -150,15 +150,16 @@ class UserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ('email', 'username', 'password')
+        fields = ('email', 'username', 'password','token',)
 
         # The `read_only_fields` option is an alternative for explicitly
         # specifying the field with `read_only=True` like we did for password
         # above. The reason we want to use `read_only_fields` here is because
         # we don't need to specify anything else about the field. For the
-        # password field, we needed to specify the `min_length` and
+        # password field, we needed to specify the `min_length` and 
         # `max_length` properties too, but that isn't the case for the token
         # field.
+
 
     def update(self, instance, validated_data):
         """Performs an update on a User."""
