@@ -45,14 +45,6 @@ class RegistrationTests(APITestCase, BaseTest):
         response = self.client.post(
             '/api/users/', self.reg_data, format="json")
         self.assertIn("already exists", str(response.data))
-    
-    def test_register_admin_user(self):
-        self.user = User.objects.create_superuser(self.username,self.email,self.password)
-        self.assertIn(str(self.user),str(self.email))
-
-    def test_register_super_user_without_password(self):
-        with self.assertRaises(TypeError):
-            self.user = User.objects.create_superuser(None,None,None)
 
     def test_register_admin_user(self):
         self.user = User.objects.create_superuser(
@@ -76,3 +68,4 @@ class RegistrationTests(APITestCase, BaseTest):
             '/api/users/', self.reg_data, format="json")
         self.assertEqual(response.status_code, 400)
         self.assertIn("atleast 3 letters", str(response.data))
+   

@@ -1,6 +1,6 @@
 from rest_framework import status
 from rest_framework.test import APIClient, APITestCase
-
+from authors.apps.authentication.models import User
 
 from .test_base import BaseTest
 
@@ -11,10 +11,12 @@ class UpdateUser(APITestCase, BaseTest):
         self.client = APIClient()
 
     def create_login_user(self):
-        self.client.post('/api/users/', self.reg_data, format="json")
+        user=User.objects.create_user(self.username,self.email,self.password)
+        User.is_verified=True
+        token=str(user.token(1))
         self.loginresponse = self.client.post(
             "/api/users/login/", self.user_login, format="json")
-        self.addcredentials(self.loginresponse.data['token'])
+        self.addcredentials(token)
 
     def addcredentials(self,response):
         self.client.credentials(
