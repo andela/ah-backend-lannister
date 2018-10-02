@@ -1,9 +1,6 @@
+from authors.apps.authentication.models import User
 from rest_framework import status
 from rest_framework.test import APIClient, APITestCase
-from authors.apps.authentication.models import User
-
-
-from authors.apps.authentication.models import User
 
 from .test_base import BaseTest
 
@@ -63,4 +60,3 @@ class RegistrationTests(APITestCase, BaseTest):
             '/api/users/', self.reg_data, format="json")
         self.assertEqual(response.status_code, 400)
         self.assertIn("atleast 3 letters", str(response.data))
-   

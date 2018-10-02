@@ -6,7 +6,7 @@ __pycache__/
 # C extensions
 *.so
 # Distribution / packaging
-migrations/
+# migrations/
 .Python
 env/
 build/
@@ -95,3 +95,4 @@ ENV/
 # SQLite3
 db.sqlite3
 migrations
+!*/migrations/__init__.py
