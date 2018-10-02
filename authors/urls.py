@@ -27,6 +27,7 @@ urlpatterns = [
 
     path('api/', include('authors.apps.authentication.urls',
                          namespace='authentication')),
+    path('api/', include('authors.apps.articles.urls', namespace='articles')),
 
     path('', RedirectView.as_view(url='coreapi-docs/'), name='index'),
     path('swagger-docs/', schema_view),

@@ -1,4 +1,8 @@
 from rest_framework import status
+from django.utils.encoding import force_text
+from authors.apps.authentication.models import User
+from authors.apps.authentication.backends import JWTAuthentication
+from rest_framework import serializers
 from rest_framework.generics import RetrieveUpdateAPIView
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
@@ -8,7 +12,8 @@ from .renderers import UserJSONRenderer
 from .serializers import (
     LoginSerializer, RegistrationSerializer, UserSerializer
 )
-
+from django.core.mail import EmailMessage
+from decouple import config
 
 class RegistrationAPIView(APIView):
 
@@ -30,10 +35,22 @@ class RegistrationAPIView(APIView):
         serializer = self.serializer_class(data=user)
         serializer.is_valid(raise_exception=True)
         serializer.save()
+        user_data = serializer.data
+        self.sendEmailVerification(user, request, user_data)
+        return Response(user_data, status=status.HTTP_201_CREATED)
 
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
-
-
+    def sendEmailVerification(self, user, request, user_data):
+        username = user['username']
+        subject = "Ah haven Account Verification"
+        body = "Hello {}, Thank you for creating an account with us, kindly click on the link below to activate your account! \n\n \
+                {}/api/users/verify_account/{}/" .format(username,request.get_host(), user_data['token'])
+        to_email = [user["email"]]
+        email = EmailMessage(subject, body, to=to_email,)
+        email.send()
+        user_data.update({
+            'message': 'A verification link has been sent to your Email, please visit your Email and activate your account'
+                    })
+        
 class LoginAPIView(APIView):
 
     """
@@ -90,4 +107,30 @@ class UserRetrieveUpdateAPIView(RetrieveUpdateAPIView):
         serializer.save()
 
         return Response(serializer.data, status=status.HTTP_200_OK)
+    
+class UserAccountVerifyView(APIView,JWTAuthentication):
+    """
+    get user email:
+    send verification link to the user email.
 
+    """
+    renderer_classes = (UserJSONRenderer,)
+    serializer_class = UserSerializer
+    def get(self, request, token):
+       
+        try:
+            user, user_token = self.authenticate_credentials(request, token)
+            if not user.is_verified:
+                user.is_verified=True
+                user.save()
+                return Response({
+                    'message': 'Your Account has been verified, continue to login',
+                    }, status=status.HTTP_200_OK)
+
+            raise serializers.ValidationError(
+                'Activation link invalid or expired'
+            )
+        except:
+            raise serializers.ValidationError(
+                'Activation link invalid or expired'
+            )
