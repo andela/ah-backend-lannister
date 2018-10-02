@@ -20,3 +20,8 @@ celery==4.2.1
 django-redis==4.9.0
 django-debug-toolbar==1.10.1
 django-cron==0.5.1
+django-allauth==0.37.1
+social-auth-app-django==2.1.0
+rest-social-auth==1.4.0
+django-rest-auth==0.9.3
+djangorestframework-jwt==1.11.0
