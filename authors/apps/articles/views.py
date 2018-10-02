@@ -7,6 +7,7 @@ from authors.apps.articles.renderers import ArticleJSONRenderer
 from authors.apps.articles.serializers import ArticleSerializer
 from rest_framework.exceptions import PermissionDenied
 from .models import Article
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from rest_framework import serializers
 from django.core.exceptions import ObjectDoesNotExist
 
