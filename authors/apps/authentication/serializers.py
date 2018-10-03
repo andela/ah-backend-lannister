@@ -1,7 +1,7 @@
+import re
+
 from django.contrib.auth import authenticate
-
 from rest_framework import serializers
-
 from .models import User
 
 
@@ -24,6 +24,35 @@ class RegistrationSerializer(serializers.ModelSerializer):
         # List all of the fields that could possibly be included in a request
         # or response, including fields specified explicitly above.
         fields = ['email', 'username', 'password', 'token']
+
+    def validate(self, data):
+        # The `validate` method is where we make sure that the current
+        # instance of `LoginSerializer` has "valid". In the case of logging a
+        # user in, this means validating that they've provided an email
+        # and password and that this combination matches one of the users in
+        # our database.
+        username = data.get('username')
+        email = data.get('email', None)
+        password = data.get('password', None)
+
+        # Raise an exception if the username does not have atleast 3 letters
+        if not re.match("(.*[a-zA-Z]){3}", username):
+            raise serializers.ValidationError(
+                {"username": "The username should have atleast 3 letters"}
+            )
+
+        # Raise an exception if the password is not alphanumeric
+        if not re.match("(.*[a-zA-Z])(.*[0-9])", password):
+            raise serializers.ValidationError(
+                {"password": "The password should have have a number and a letter"}
+            )
+
+        return {
+            'email': email,
+            'username': username,
+            'password': password
+
+        }
 
     def create(self, validated_data):
         # Use the `create_user` method we wrote earlier to create a new user.
@@ -69,7 +98,7 @@ class LoginSerializer(serializers.Serializer):
         # `authenticate` will return `None`. Raise an exception in this case.
         if user is None:
             raise serializers.ValidationError(
-                'A user with this email and password was not found.'
+                "wrong password or email"
             )
 
         # Django provides a flag on our `User` model called `is_active`. The
