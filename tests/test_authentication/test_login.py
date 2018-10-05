@@ -18,3 +18,23 @@ class LoginTest(APITestCase, BaseTest):
         self.assertIn(self.email, str(response.data))
         self.assertIn("token", str(response.data))
 
+    def test_no_password(self):
+        self.user_login['user']['password'] = " "
+        response = self.client.post(
+            '/api/users/login/', self.user_login, format="json")
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("blank", str(response.data))
+
+    def test_no_email(self):
+        self.user_login['user']['email'] = " "
+        response = self.client.post(
+            '/api/users/login/', self.user_login, format="json")
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("blank", str(response.data))
+
+    def test_user_does_not_exist(self):
+        self.user_login['user']['email'] = "miriam@gmail.com"
+        response = self.client.post(
+            '/api/users/login/', self.user_login, format="json")
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("wrong password or email", str(response.data))

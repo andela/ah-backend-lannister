@@ -6,7 +6,7 @@ class BaseTest:
     def __init__(self):
         self.username = "simon"
         self.email = "simon@andela.com"
-        self.password = "12345678"
+        self.password = "simon123"
         self.bio = "I am left handed"
         self.image_url = "https://i.stack.imgur.com/xHWG8.jpg"
         self.reg_data = {
@@ -35,19 +35,5 @@ class BaseTest:
                 "email": self.email,
                 "bio": self.bio,
                 "image": self.image_url
-            }
-        }
-        self.self_no_password_login = {
-            "user": {
-                "username": self.username,
-                "email": self.email,
-                "password": None
-            }
-        }
-        self.no_email_login = {
-            "user": {
-                "username": self.username,
-                "email": None,
-                "password": self.password
             }
         }
