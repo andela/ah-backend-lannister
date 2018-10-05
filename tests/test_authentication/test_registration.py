@@ -1,5 +1,7 @@
 from rest_framework import status
 from rest_framework.test import APIClient, APITestCase
+from authors.apps.authentication.models import User
+
 
 from authors.apps.authentication.models import User
 

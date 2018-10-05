@@ -1,19 +1,21 @@
-from rest_framework import status
+from decouple import config
+from django.core.mail import EmailMessage
 from django.utils.encoding import force_text
-from authors.apps.authentication.models import User
-from authors.apps.authentication.backends import JWTAuthentication
-from rest_framework import serializers
-from rest_framework.generics import RetrieveUpdateAPIView
+from rest_framework import serializers, status
+from rest_framework.authentication import get_authorization_header
+from rest_framework.generics import RetrieveUpdateAPIView, UpdateAPIView
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from authors.apps.authentication.backends import JWTAuthentication
+from authors.apps.authentication.models import User
+
 from .renderers import UserJSONRenderer
-from .serializers import (
-    LoginSerializer, RegistrationSerializer, UserSerializer
-)
-from django.core.mail import EmailMessage
-from decouple import config
+from .send_email import send_gridmail
+from .serializers import (LoginSerializer, PasswordResetSerializer,
+                          RegistrationSerializer, UserSerializer)
+
 
 class RegistrationAPIView(APIView):
 
@@ -134,3 +136,51 @@ class UserAccountVerifyView(APIView,JWTAuthentication):
             raise serializers.ValidationError(
                 'Activation link invalid or expired'
             )
+
+class UserPasswordReset(RetrieveUpdateAPIView):
+    permission_classes = (AllowAny,)
+    renderer_classes = (UserJSONRenderer,)
+    serializer_class = PasswordResetSerializer
+
+
+    def post(self, request):
+        user = request.data.get('user', {})
+        # check data with serializer
+        data_from_serializer = self.serializer_class(data=user)
+        data_from_serializer.is_valid(raise_exception=True)
+
+        # send email method
+        url = request.get_host()
+        email = data_from_serializer.data['email']
+        token = data_from_serializer.data['token']
+        response = send_gridmail(email, token, url)
+        return Response(response, status=status.HTTP_200_OK)
+
+    def retrieve(self, request,token, *args, **kwargs):
+        url = request.get_host()
+        #validate url here if its valid ie token
+        # else send them invalid token message
+        res = {'message': 'use this token to reset password',
+               "token": token, 'url': 'http://'+url+'/api/users/password_reset/change/'}
+        return Response(res, status=status.HTTP_200_OK)
+
+
+class UpdatePassword(UpdateAPIView):
+    permission_classes = (IsAuthenticated,)
+    renderer_classes = (UserJSONRenderer,)
+    serializer_class = UserSerializer
+
+    def update(self, request, *args, **kwargs):
+        serializer_data = request.data.get('user', {})
+        url = request.get_host()
+        # Here is that serialize, validate, save pattern we talked about
+        # before.
+        serializer = self.serializer_class(
+            request.user, data=serializer_data, partial=True
+        )
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        #blacklist the token here 
+        res = {'message': 'password has been succefully reset,click the link to login',
+               'url': 'http://'+url+'/api/users/login/'}
+        return Response(res, status=status.HTTP_200_OK)
