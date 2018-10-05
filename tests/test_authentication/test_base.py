@@ -37,3 +37,17 @@ class BaseTest:
                 "image": self.image_url
             }
         }
+        self.self_no_password_login = {
+            "user": {
+                "username": self.username,
+                "email": self.email,
+                "password": None
+            }
+        }
+        self.no_email_login = {
+            "user": {
+                "username": self.username,
+                "email": None,
+                "password": self.password
+            }
+        }

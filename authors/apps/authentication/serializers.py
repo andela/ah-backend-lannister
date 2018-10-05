@@ -109,6 +109,17 @@ class LoginSerializer(serializers.Serializer):
             raise serializers.ValidationError(
                 'This user has been deactivated.'
             )
+        
+        # Add a flag on our `User` model called `is_verified`. The
+        # purpose of this flag to tell us whether the user has been 
+        # verified yet or not. This will be a way to check that accounts with 
+        # wrong or non existing emails are not used to permitted. 
+        # In case a user tries to login before verifying their account, there will be
+        # an exception raised in this case.
+        if not user.is_verified:
+            raise serializers.ValidationError(
+                'This user has not been verified yet. Please visit your Email and follow instructions.'
+            )
 
         # The `validate` method should return a dictionary of validated data.
         # This is the data that is passed to the `create` and `update` methods
@@ -119,7 +130,6 @@ class LoginSerializer(serializers.Serializer):
             'token': user.token
 
         }
-
 
 class UserSerializer(serializers.ModelSerializer):
     """Handles serialization and deserialization of User objects."""
