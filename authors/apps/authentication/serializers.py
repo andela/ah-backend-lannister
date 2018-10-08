@@ -15,7 +15,6 @@ class RegistrationSerializer(serializers.ModelSerializer):
     # characters, and can not be read by the client.
     password = serializers.CharField(
         max_length=128,
-        min_length=8,
         write_only=True
     )
 
@@ -26,7 +25,38 @@ class RegistrationSerializer(serializers.ModelSerializer):
         model = User
         # List all of the fields that could possibly be included in a request
         # or response, including fields specified explicitly above.
-        fields = ['email', 'username', 'password','token']
+        fields = ['email', 'username', 'password', 'token']
+
+    def validate(self, data):
+        # The `validate` method is where we make sure that the current
+        # instance of `LoginSerializer` has "valid". In the case of logging a
+        # user in, this means validating that they've provided an email
+        # and password and that this combination matches one of the users in
+        # our database.
+        username = data.get('username')
+        email = data.get('email', None)
+        password = data.get('password', None)
+
+        # Raise an exception if the username does not have atleast 3 letters
+        if not re.match("(.*[a-zA-Z]){3}", username):
+            raise serializers.ValidationError(
+                {"username": "The username should have atleast 3 letters"}
+            )
+
+        # Raise an exception if the password is not alphanumeric
+        if not re.match("(?=.*[a-z])(?=.*[A-Z])"
+                        "(?=.*[0-9])(?=.*[^a-zA-Z0-9])", password) or len(password)<8:
+            raise serializers.ValidationError(
+                {"password": "The password should have atleast 8 characters a"
+                "lowwercase,uppercase,number and a special character"}
+            )
+
+        return {
+            'email': email,
+            'username': username,
+            'password': password
+
+        }
 
     def create(self, validated_data):
         # Use the `create_user` method we wrote earlier to create a new user.

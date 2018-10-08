@@ -14,7 +14,7 @@ class PasswordRestTestCase(APITestCase, BaseTest):
     def setUp(self):
         BaseTest.__init__(self)
         self.client = APIClient()
-        self.email = 'kimbsimon2@gmail.com'
+        self.email = 'kimbsimon@gmail.com'
         # Create a user
         self.user = User.objects.create_user(
             self.username, self.email, self.password)
