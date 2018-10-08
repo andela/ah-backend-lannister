@@ -6,7 +6,7 @@ class BaseTest:
     def __init__(self):
         self.username = "simon"
         self.email = "simon@andela.com"
-        self.password = "simon123"
+        self.password = "Simon123@"
         self.bio = "I am left handed"
         self.image_url = "https://i.stack.imgur.com/xHWG8.jpg"
         self.reg_data = {

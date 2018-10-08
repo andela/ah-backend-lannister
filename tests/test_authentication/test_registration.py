@@ -32,7 +32,7 @@ class RegistrationTests(APITestCase, BaseTest):
         response = self.client.post(
             '/api/users/', self.reg_data, format="json")
         self.assertEqual(response.status_code, 400)
-        self.assertIn("8 characters", str(response.data))
+        self.assertIn("lowwercase,uppercase,number and a special character", str(response.data))
 
     def test_missing_email_field(self):
         del self.reg_data['user']['email']
@@ -56,13 +56,6 @@ class RegistrationTests(APITestCase, BaseTest):
     def test_register_super_user_without_password(self):
         with self.assertRaises(TypeError):
             self.user = User.objects.create_superuser(None, None, None)
-
-    def test_password_not_alphanumeric(self):
-        self.reg_data['user']['password'] = "23456890"
-        response = self.client.post(
-            '/api/users/', self.reg_data, format="json")
-        self.assertEqual(response.status_code, 400)
-        self.assertIn("a number and a letter", str(response.data))
 
     def test_invalid_username(self):
         self.reg_data['user']['username'] = "234568#"

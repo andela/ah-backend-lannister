@@ -46,7 +46,6 @@ class ProfileRetrieveUpdateView(RetrieveUpdateAPIView):
 
         username=self.kwargs["username"]
         if username == request.user.username:
-  
             user_data = request.data.get('profile', {})
             
             serializer_data = {
