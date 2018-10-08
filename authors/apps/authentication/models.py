@@ -128,7 +128,8 @@ class User(AbstractBaseUser, PermissionsMixin):
     def token(self, x=1):
         payload = {
             "email": self.email,
-            "exp": datetime.now() + timedelta(days=x)
+            "exp": datetime.now() + timedelta(days=x),
+            "username":self.username
         }
         jwt_token = jwt.encode(payload, defaults.SECRET_KEY)
         return jwt_token.decode("utf-8")    
