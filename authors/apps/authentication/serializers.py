@@ -15,7 +15,6 @@ class RegistrationSerializer(serializers.ModelSerializer):
     # characters, and can not be read by the client.
     password = serializers.CharField(
         max_length=128,
-        min_length=8,
         write_only=True
     )
 
@@ -45,9 +44,11 @@ class RegistrationSerializer(serializers.ModelSerializer):
             )
 
         # Raise an exception if the password is not alphanumeric
-        if not re.match("(.*[a-zA-Z])(.*[0-9])", password):
+        if not re.match("(?=.*[a-z])(?=.*[A-Z])"
+                        "(?=.*[0-9])(?=.*[^a-zA-Z0-9])", password) or len(password)<8:
             raise serializers.ValidationError(
-                {"password": "The password should have have a number and a letter"}
+                {"password": "The password should have atleast 8 characters a"
+                "lowwercase,uppercase,number and a special character"}
             )
 
         return {

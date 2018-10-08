@@ -9,7 +9,10 @@ class BaseTest(TestCase):
         self.user_data = {"user": {
             "username": "admin",
             "email": "admin@gmail.com",
-            "password": "admin12345"}
+            "password": "Admin12345@"
+
+            }
+        
         }
 
         self.profile_data = {"profile": {
@@ -38,19 +41,12 @@ class BaseTest(TestCase):
             "first_name": "spiderman",
             "email": "xyz@gmail.com",
             "bio": "",
-            }
+        }
         }
 
+        self.sign_up = self.client.post(
+            "/api/users/", self.user_data, format="json")
 
-
-        
-
-        
-
-
-
-        self.sign_up = self.client.post("/api/users/", self.user_data, format="json")
-        
-        self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.sign_up.data["token"])
-        
+        self.client.credentials(
+            HTTP_AUTHORIZATION='Token ' + self.sign_up.data["token"])
 

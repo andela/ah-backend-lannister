@@ -9,4 +9,3 @@ def build_profile_on_user_creation(sender, instance, created, **kwargs):
         profile = Profile(user=instance)
         profile.save()
 
-

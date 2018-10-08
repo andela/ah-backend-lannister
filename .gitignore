@@ -2,10 +2,9 @@
 __pycache__/
 *.py[cod]
 *$py.class
-
+.DS_Store
 # C extensions
 *.so
-
 # Distribution / packaging
 migrations/
 .Python
@@ -95,3 +94,4 @@ ENV/
 
 # SQLite3
 db.sqlite3
+migrations

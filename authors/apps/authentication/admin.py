@@ -1,4 +1,4 @@
-from django.contrib import admin
+from authors.apps.default_admin import *
 from authors.apps.authentication.models import User
 
 class UserAdmin(admin.ModelAdmin):
