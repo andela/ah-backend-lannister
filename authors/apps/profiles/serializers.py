@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Profile
+from .models import Profile, FollowingUser
 
 class ProfileSerializer(serializers.ModelSerializer):
     username = serializers.CharField(source='user.username')
@@ -23,3 +23,10 @@ class ProfilesSerializers(serializers.ModelSerializer):
     class Meta:
         model = Profile
         fields = ('username', 'first_name','last_name','bio', 'following','image')
+
+class FollowerSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = FollowingUser
+        fields = ('following_user','followed_user','date_added')
+
