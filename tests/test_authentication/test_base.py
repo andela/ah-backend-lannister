@@ -101,5 +101,14 @@ class BaseTest:
                 "body": "this is edited",
             }
         }
-        self.slug='how-to-tnnrain-your-flywwwwwwwwwwf'
-        
+        self.slug = 'how-to-tnnrain-your-flywwwwwwwwwwf'
+        self.rate_data = {
+            "rate": {
+                "rating": 2,
+            }
+        }
+        self.like_data = {
+            "like": {
+                "likes": True,
+            }
+        }

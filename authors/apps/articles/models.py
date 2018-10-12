@@ -1,9 +1,12 @@
+from authors.apps.authentication.models import User
+from django.conf import settings
+from django.contrib.postgres.fields import ArrayField
 from django.db import models
+from django.db.models import Avg
 from django.utils import timezone
 from django.utils.text import slugify
-from django.contrib.postgres.fields import ArrayField
-from authors.apps.authentication.models import User
-from .utils import get_unique_slug,time
+
+from .utils import get_unique_slug, time
 
 # Create your models here.
 
@@ -41,17 +44,33 @@ class Article(models.Model):
         This string is used when a `Article` is printed in the console.
         """
         return self.title
+
     def save(self, *args, **kwargs):
         if not self.slug:
             self.slug = get_unique_slug(self, 'title', 'slug')
         return super().save(*args, **kwargs)
-    
-    def read(self):
-        read_time=time(self.body)
-        return read_time
 
+    def read(self):
+        read_time = time(self.body)
+        return read_time
 
     class Meta:
         ordering = ['-created_at']
 
-    
+    def average_rating(self):
+        ratings = RateArticle.objects.filter(
+            article=self).aggregate(Avg('rating'))
+        if ratings['rating__avg'] == None:
+            return 0
+        else:
+            return int(ratings['rating__avg'])
+
+
+class RateArticle(models.Model):
+    rated_by = models.ForeignKey(User, blank=False, on_delete=models.CASCADE)
+
+    date_created = models.DateTimeField(auto_now_add=True)
+
+    article = models.ForeignKey(Article, blank=False, on_delete=models.CASCADE)
+
+    rating = models.IntegerField(blank=False, null=False, default=0)

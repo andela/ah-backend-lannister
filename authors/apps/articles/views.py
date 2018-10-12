@@ -1,14 +1,18 @@
-from django.shortcuts import render
-from rest_framework import generics
-from rest_framework import status
-from rest_framework.permissions import IsAuthenticated,IsAuthenticatedOrReadOnly
-from rest_framework.response import Response
+import json
 from authors.apps.articles.renderers import ArticleJSONRenderer
 from authors.apps.articles.serializers import ArticleSerializer
-from rest_framework.exceptions import PermissionDenied
-from .models import Article
-from rest_framework import serializers
 from django.core.exceptions import ObjectDoesNotExist
+from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
+from django.shortcuts import get_object_or_404, render
+from rest_framework import generics, serializers, status
+from rest_framework.exceptions import PermissionDenied
+from rest_framework.generics import ListCreateAPIView
+from rest_framework.permissions import (IsAuthenticated,
+                                        IsAuthenticatedOrReadOnly)
+from rest_framework.response import Response
+from .models import Article, RateArticle
+from .renderers import ArticleJSONRenderer, RateUserJSONRenderer
+from .serializers import ArticleSerializer, RateArticleSerializer
 
 
 class ArticleAPIView(generics.ListCreateAPIView):
@@ -25,7 +29,7 @@ class ArticleAPIView(generics.ListCreateAPIView):
         self.perform_create(serializer)
         headers = self.get_success_headers(serializer.data)
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
-    
+
     def perform_create(self, serializer):
         serializer.save(author=self.request.user)   
 
@@ -37,13 +41,13 @@ class ArticleAPIDetailsView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = ArticleSerializer
     lookup_field = "slug"
     queryset = Article.objects.all()
-    
+
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
         if instance.author != request.user:
             raise PermissionDenied
         self.perform_destroy(instance)
-        return Response({"message":"article deleted"},status=status.HTTP_200_OK)
+        return Response({"message": "article deleted"}, status=status.HTTP_200_OK)
 
     def update(self, request, *args, **kwargs):
         article_dict = request.data.get("article", {})
@@ -51,7 +55,32 @@ class ArticleAPIDetailsView(generics.RetrieveUpdateDestroyAPIView):
         instance = self.get_object()
         if instance.author != request.user:
             raise PermissionDenied
-        serializer = self.get_serializer(instance, data=article_dict, partial=partial)
+        serializer = self.get_serializer(
+            instance, data=article_dict, partial=partial)
         serializer.is_valid(raise_exception=True)
         self.perform_update(serializer)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+
+class RateArticleView(ListCreateAPIView):
+    permission_classes = (IsAuthenticated,)
+    renderer_classes = (RateUserJSONRenderer,)
+    queryset = RateArticle.objects.all()
+    serializer_class = RateArticleSerializer
+
+    def create(self, request, *args, **kwargs):
+        article_slug = get_object_or_404(Article, slug=self.kwargs['slug'])
+        get_rated_article = RateArticle.objects.filter(
+            article_id=article_slug.id, rated_by_id=request.user.id)
+        if article_slug.author_id == request.user.id:
+            return Response({"msg": "you can not rate your own article"})
+        if get_rated_article:
+            return Response({"msg": "you have already rated this article"})
+        rating = request.data.get('rate', {})
+        serializer = self.serializer_class(data=rating)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer, article_slug)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+    def perform_create(self, serializer, article_slug):
+        serializer.save(rated_by=self.request.user, article=article_slug)
