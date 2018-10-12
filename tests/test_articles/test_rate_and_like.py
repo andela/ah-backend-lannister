@@ -62,3 +62,26 @@ class ArticlesTest(APITestCase, BaseTest):
         response = self.client.post(
             f'/api/articles/{self.slug}/rating/', self.rate_data, format="json")
         self.assertIn("already rated this article", str(response.data))
+
+    def test_invalid_liking(self):
+        self.create_login_user()
+        self.like_data['like']['likes'] = 2
+        response = self.client.post(
+            f'/api/articles/{self.slug}/like/', self.like_data, format="json")
+        self.assertIn("not a valid boolean", str(response.data))
+
+    def test_missing_like_field(self):
+        self.create_login_user()
+        del self.like_data['like']['likes']
+        response = self.client.post(
+            f'/api/articles/{self.slug}/like/', self.like_data, format="json")
+        self.assertIn("field is required", str(response.data))
+
+    def test_update_like(self):
+        self.create_login_user()
+        self.client.post(
+            f'/api/articles/{self.slug}/like/', self.like_data, format="json")
+        self.like_data['like']['likes'] = False
+        response = self.client.put(
+            f'/api/articles/{self.slug}/dislike/', self.like_data, format="json")
+        self.assertEqual(response.status_code, 201)

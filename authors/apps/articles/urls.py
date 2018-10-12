@@ -1,11 +1,17 @@
 from django.urls import path
 
-from .views import ArticleAPIView, ArticleAPIDetailsView, RateArticleView
+from .views import (ArticleAPIView, ArticleAPIDetailsView, 
+            RateArticleView, LikeArticleView, LikeAPIDetailsView)
 
 app_name = "articles"
 
 urlpatterns = [
     path("articles/", ArticleAPIView.as_view()),
-    path('articles/<str:slug>/', ArticleAPIDetailsView.as_view(),name='retrieveUpdateDelete'),
-    path('articles/<str:slug>/rating/', RateArticleView.as_view())
+    path('articles/<str:slug>/', ArticleAPIDetailsView.as_view(),
+         name='retrieveUpdateDelete'),
+    path('articles/<str:slug>/rating/', RateArticleView.as_view()),
+    path('articles/<str:slug>/like/',
+         LikeArticleView.as_view(), name='like_article'),
+    path('articles/<str:slug>/dislike/',
+         LikeAPIDetailsView.as_view(), name='dislike')
 ]
