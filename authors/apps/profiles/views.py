@@ -1,11 +1,11 @@
 from rest_framework import status
-from rest_framework.generics import RetrieveUpdateAPIView
+from rest_framework.generics import RetrieveUpdateAPIView, RetrieveAPIView
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
 from .models import Profile
 from .renderers import ProfileJSONRenderer
-from .serializers import ProfileSerializer
+from .serializers import ProfileSerializer,ProfilesSerializers
 from .exceptions import ProfileDoesNotExist
 from rest_framework.exceptions import PermissionDenied,ValidationError
 import jwt
@@ -74,3 +74,22 @@ class ProfileRetrieveUpdateView(RetrieveUpdateAPIView):
             return Response(serializer.data, status=status.HTTP_200_OK)
             
         raise PermissionDenied("You don't have rights to modify this profile")
+
+class RetriveProfilesView(RetrieveAPIView):
+    permission_classes = (IsAuthenticated,)
+    renderer_classes = (ProfileJSONRenderer,) 
+    serializer_class = ProfilesSerializers
+
+    def retrieve(self, request, *args, **kwargs):
+        
+        try:
+
+            profiles = Profile.objects.all()
+        
+        except Profile.DoesNotExist:
+            raise ProfileDoesNotExist
+
+            
+
+        serializer = self.serializer_class(profiles, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
