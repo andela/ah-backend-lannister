@@ -18,7 +18,7 @@ from taggit.models import Tag
 from .exceptions import TagHasNoArticles, CatHasNoArticles
 from .models import Article, LikeArticle, RateArticle, Category
 from .renderers import (ArticleJSONRenderer, LikeUserJSONRenderer,
-                        RateUserJSONRenderer,TagJSONRenderer, CategoryJSONRenderer)
+                        RateUserJSONRenderer, TagJSONRenderer, CategoryJSONRenderer)
 from .serializers import (ArticleSerializer, LikeArticleSerializer,
                           RateArticleSerializer, CategorySerializer)
 
@@ -44,9 +44,10 @@ class TagRetrieveAPIView(generics.RetrieveAPIView):
         else:
             raise TagHasNoArticles("This tag currently has no articles")
 
+
 class CategoryListCreateAPIView(generics.ListCreateAPIView):
-    """ List / Create categories """ 
-        
+    """ List / Create categories """
+
     queryset = Category.objects.all()
     permission_classes = (AllowAny,)
     serializer_class = CategorySerializer
@@ -188,3 +189,81 @@ class LikeAPIDetailsView(generics.RetrieveUpdateDestroyAPIView):
         serializer.is_valid(raise_exception=True)
         self.perform_update(serializer)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+
+class RateArticleView(ListCreateAPIView):
+    permission_classes = (IsAuthenticated,)
+    renderer_classes = (RateUserJSONRenderer,)
+    queryset = RateArticle.objects.all()
+    serializer_class = RateArticleSerializer
+
+    def create(self, request, *args, **kwargs):
+        article_slug = get_object_or_404(Article, slug=self.kwargs['slug'])
+        get_rated_article = RateArticle.objects.filter(
+            article_id=article_slug.id, rated_by_id=request.user.id)
+        if article_slug.author_id == request.user.id:
+            return Response({"msg": "you can not rate your own article"})
+        if get_rated_article:
+            return Response({"msg": "you have already rated this article"})
+        rating = request.data.get('rate', {})
+        serializer = self.serializer_class(data=rating)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer, article_slug)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+    def perform_create(self, serializer, article_slug):
+        serializer.save(rated_by=self.request.user, article=article_slug)
+
+
+class FavoriteArticleView(generics.CreateAPIView):
+    permission_classes = (IsAuthenticated,)
+    serializer_class = ArticleSerializer
+
+    def create(self, request, *args, **kwargs):
+        profile = self.request.user.profile
+
+        try:
+            article = Article.objects.get(slug=self.kwargs['slug'])
+            if article.author_id == profile.user_id:
+                return Response({'error': 'You cannot favorite your own article'}, status=status.HTTP_400_BAD_REQUEST)
+            if profile.has_favorited(article):
+                return Response({'error': 'You already favorited this article'}, status=status.HTTP_400_BAD_REQUEST)
+        except Article.DoesNotExist:
+            return Response({'message': 'An article with this slug was not found.'},
+                            status=status.HTTP_404_NOT_FOUND)
+
+        profile.favorite(article)
+        article.favorites_count += 1
+        article.save()
+
+        serializer = self.serializer_class(article)
+
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+
+class UnFavoriteArticleView(generics.DestroyAPIView):
+    permission_classes = (IsAuthenticated,)
+    serializer_class = ArticleSerializer
+
+    def delete(self, request, *args, **kwargs):
+        profile = self.request.user.profile
+
+        try:
+            article = Article.objects.get(slug=self.kwargs['slug'])
+        except Article.DoesNotExist:
+            return Response({'message': 'An article with this slug was not found.'},
+                            status=status.HTTP_404_NOT_FOUND)
+
+        if not profile.has_favorited(article):
+            return Response({'message': 'This article is not among your favorites'},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        profile.unfavorite(article)
+        if article.favorites_count > 0:
+            article.favorites_count -= 1
+
+        article.save()
+
+        serializer = self.serializer_class(article)
+
+        return Response(serializer.data, status=status.HTTP_200_OK)

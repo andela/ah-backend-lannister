@@ -10,12 +10,12 @@ from .utils import get_unique_slug, time
 
 from django.contrib.postgres.fields import ArrayField
 from authors.apps.authentication.models import User
-from .utils import get_unique_slug,time
+from .utils import get_unique_slug, time
 from taggit.managers import TaggableManager
 
 
 class Category(models.Model):
-      title = models.CharField(max_length=100)
+      title = models.CharField(max_length=100, default="general")
       slug = models.SlugField(max_length=100, unique=True)
 
       class Meta: 

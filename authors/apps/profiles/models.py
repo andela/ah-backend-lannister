@@ -15,6 +15,8 @@ class Profile(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     following = models.BooleanField(default=False)
     number_of_articles = models.IntegerField(default=0)
+    favorites = models.ManyToManyField('articles.Article', related_name='favorited_by')
+
 
     def __str__(self):
         return self.user.username
@@ -23,6 +25,18 @@ class Profile(models.Model):
         if self.following==True:
             return False
         return True
+
+    def favorite(self, article):
+        """Favorite an article"""
+        self.favorites.add(article)
+
+    def unfavorite(self, article):
+        """Unfavorite an article"""
+        self.favorites.remove(article)
+
+    def has_favorited(self, article):
+        """Check if user has already favorited that article"""
+        return self.favorites.filter(pk=article.pk).exists()
 
 
 class FollowingUser(models.Model):
@@ -33,7 +47,7 @@ class FollowingUser(models.Model):
         "authentication.User", related_name='following_user', on_delete=models.CASCADE)
     followed_user = models.ForeignKey(
         "authentication.User", related_name='followed_user', on_delete=models.CASCADE)
-    date_added = models.DateTimeField(default=datetime.now)
+    date_added = models.DateTimeField(auto_now_add=True)
 
     def save(self, **kwargs):
         """" This method saves the following """
