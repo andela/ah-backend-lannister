@@ -7,13 +7,12 @@ from authors.apps.articles.renderers import ArticleJSONRenderer
 from authors.apps.articles.serializers import ArticleSerializer
 from rest_framework.exceptions import PermissionDenied
 from .models import Article
-from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from rest_framework import serializers
 from django.core.exceptions import ObjectDoesNotExist
 
 
 class ArticleAPIView(generics.ListCreateAPIView):
-    """create an article, list all articles """
+    """create an article, list all articles paginated to 5 per page"""
     queryset = Article.objects.all()
     permission_classes = (IsAuthenticatedOrReadOnly,)
     renderer_classes = (ArticleJSONRenderer,)
@@ -28,9 +27,9 @@ class ArticleAPIView(generics.ListCreateAPIView):
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
     
     def perform_create(self, serializer):
-        serializer.save(author=self.request.user)
+        serializer.save(author=self.request.user)   
 
-        
+
 class ArticleAPIDetailsView(generics.RetrieveUpdateDestroyAPIView):
     """retreive, update and delete an article """
     permission_classes = (IsAuthenticatedOrReadOnly,)
