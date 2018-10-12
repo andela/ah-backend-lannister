@@ -1,12 +1,16 @@
 from authors.apps.articles.models import Article, RateArticle, LikeArticle
 from authors.apps.authentication.models import User
 from rest_framework import serializers
+from taggit_serializer.serializers import (TagListSerializerField,
+                                           TaggitSerializer)
+                                          
+from taggit.models import Tag
 
-
-class ArticleSerializer(serializers.ModelSerializer):
+class ArticleSerializer(TaggitSerializer, serializers.ModelSerializer):
     """Serializer for articles."""
     author = serializers.ReadOnlyField(source='author.username')
     read_time = serializers.ReadOnlyField(source='read')
+    tags = TagListSerializerField()
 
     class Meta:
         model = Article
@@ -14,10 +18,15 @@ class ArticleSerializer(serializers.ModelSerializer):
         or response, including fields specified explicitly above."""
 
         fields = ('author', 'title', 'slug', 'description',
-                  'body', 'created_at', 'updated_at', 'read_time', 'average_rating', 'likes', 'dislikes')
+                  'body', 'created_at', 'updated_at', 'read_time', 'average_rating', 'likes', 'dislikes','tags',)
         read_only_fields = ('slug', 'author_id',)
 
-
+class TagSerializer(serializers.ModelSerializer):
+    
+    class Meta:
+        model = Tag
+        fields = ('name',)
+        
 class RateArticleSerializer(serializers.ModelSerializer):
     rated_by = serializers.ReadOnlyField(source='rated_by.username')
     article = serializers.ReadOnlyField(source='article.slug')
@@ -35,6 +44,7 @@ class RateArticleSerializer(serializers.ModelSerializer):
 
         return {
             "rating": rating,
+
         }
 
 
@@ -55,3 +65,5 @@ class LikeArticleSerializer(serializers.ModelSerializer):
 
         return {
             "likes": likes}
+
+

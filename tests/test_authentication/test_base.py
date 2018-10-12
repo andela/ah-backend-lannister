@@ -64,28 +64,49 @@ class BaseTest:
             "article": {
                 "title": self.title,
                 "description": self.description,
-                "body": self.body
+                "body": self.body,
+                "tags": ["reactjs"],
+                "category_name": "Money"
             }
         }
+
+        self.create_article_several_tags = {
+            "article": {
+                "title": self.title,
+                "description": self.description,
+                "body": self.body,
+                "tags": ["reactjs", "angularjs", "dragons"],
+                "category_name": "Money"
+            }
+        }
+
+        
         self.empty_create_article = {
             "article": {
                 "title": "",
                 "description": "",
-                "body": ""
+                "body": "",
+                "tags": ["reactjs", "angularjs", "dragons"],
+                "category_name": "Money"
             }
         }
         self.wrong_article_update = {
             "article": {
                 "title": "beattr",
                 "description": "",
-                "body": "You cc"
+                "body": "You cc",
+                "tags": ["reactjs", "angularjs", "dragons"],
+                "category_name": "Money"
             }
         }
+        
         self.update_article = {
             "article": {
                 "title": "beattr",
                 "description": "How to manage carrying",
-                "body": "You cc"
+                "body": "You cc",
+                "tags": ["reactjs", "angularjs", "dragons"],
+                "category_name": "Money"
             }
         }
 

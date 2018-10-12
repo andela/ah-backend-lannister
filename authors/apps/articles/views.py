@@ -13,7 +13,42 @@ from rest_framework.response import Response
 from .models import Article, RateArticle, LikeArticle
 from .renderers import ArticleJSONRenderer, RateUserJSONRenderer, LikeUserJSONRenderer
 from .serializers import ArticleSerializer, RateArticleSerializer, LikeArticleSerializer
+from .models import Article, RateArticle
+from django.shortcuts import render
+from rest_framework import generics
+from rest_framework import status
+from rest_framework.permissions import IsAuthenticated,IsAuthenticatedOrReadOnly, AllowAny
+from rest_framework.response import Response
+from authors.apps.articles.renderers import ArticleJSONRenderer, TagJSONRenderer
+from authors.apps.articles.serializers import ArticleSerializer, TagSerializer
+from rest_framework.exceptions import PermissionDenied
+from .models import Article
+from rest_framework import serializers
+from django.core.exceptions import ObjectDoesNotExist
+from .exceptions import TagHasNoArticles
+from taggit.models import Tag 
+from django.http import JsonResponse
 
+class TagListAPIView(generics.ListAPIView):
+    queryset = Tag.objects.all()
+    permission_classes = (AllowAny,)
+    renderer_classes = (TagJSONRenderer,)
+    serializer_class = TagSerializer
+
+
+class TagRetrieveAPIView(generics.RetrieveAPIView):
+
+    permission_classes = (AllowAny,)
+    renderer_classes = (TagJSONRenderer,)
+    serializer_class = TagSerializer
+
+    def retrieve(self, request, *args, **kwargs):
+        tag_name = self.kwargs["tag_name"]
+        tags = Article.objects.filter(tags__name__in=[tag_name]).values()
+        if tags:
+            return JsonResponse({'articles': list(tags)}, status=status.HTTP_200_OK)
+        else:
+            raise TagHasNoArticles("This tag currently has no articles")
 
 class ArticleAPIView(generics.ListCreateAPIView):
     """create an article, list all articles paginated to 5 per page"""
