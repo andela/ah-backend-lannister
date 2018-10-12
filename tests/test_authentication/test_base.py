@@ -9,6 +9,9 @@ class BaseTest:
         self.password = "Simon123@"
         self.bio = "I am left handed"
         self.image_url = "https://i.stack.imgur.com/xHWG8.jpg"
+        self.title = "How to tnnrain your flywwwwwwwwwwf"
+        self.description = "Ever wondner how toddddd ddddwwwwd?"
+        self.body = "You have to benlieve becausedddddddddcf"
         self.reg_data = {
             "user": {
                 "username": self.username,
@@ -55,5 +58,33 @@ class BaseTest:
         self.user_password_reset_data = {
             'user': {
                 'password': self.password,
+            }
+        }
+        self.create_article = {
+            "article": {
+                "title": self.title,
+                "description": self.description,
+                "body": self.body
+            }
+        }
+        self.empty_create_article = {
+            "article": {
+                "title": "",
+                "description": "",
+                "body": ""
+            }
+        }
+        self.wrong_article_update = {
+            "article": {
+                "title": "beattr",
+                "description": "",
+                "body": "You cc"
+            }
+        }
+        self.update_article = {
+            "article": {
+                "title": "beattr",
+                "description": "How to manage carrying",
+                "body": "You cc"
             }
         }
