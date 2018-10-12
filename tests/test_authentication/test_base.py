@@ -88,3 +88,18 @@ class BaseTest:
                 "body": "You cc"
             }
         }
+
+        self.test_comment = {
+            "comment": {
+
+                "body": "iidtfygubbbhjgfhtimes",
+            }
+        }
+        self.test_comment_edited = {
+            "comment": {
+
+                "body": "this is edited",
+            }
+        }
+        self.slug='how-to-tnnrain-your-flywwwwwwwwwwf'
+        

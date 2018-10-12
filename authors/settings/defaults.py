@@ -55,6 +55,7 @@ INSTALLED_APPS = [
     'authors.apps.profiles',
     'authors.apps.articles',
     'rest_framework_swagger',
+    'authors.apps.comments',
 ]
 
 
