@@ -27,12 +27,8 @@ class CommentSerializer(serializers.ModelSerializer):
         return ProfileSerializer(x).data
 
     def validate(self, data):
-        body = data.get('body', None)
-        if body is None:
-            raise serializers.ValidationError(
-                'Please insert the body of the comment'
-            )
-        return data
+        return CommentChildSerializer.validate(self, data)
+
 
 class ProfileSerializer(serializers.ModelSerializer):
     username = serializers.CharField(source='user.username')

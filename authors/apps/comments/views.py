@@ -1,3 +1,4 @@
+from authors.apps.articles.models import Article
 from django.shortcuts import get_object_or_404, render
 from rest_framework import generics, serializers, status
 from rest_framework.exceptions import PermissionDenied
@@ -5,11 +6,8 @@ from rest_framework.permissions import (IsAuthenticated,
                                         IsAuthenticatedOrReadOnly)
 from rest_framework.response import Response
 
-from authors.apps.articles.models import Article
-
 from .models import Comment
-from .renderer import (CommentJSONRenderer, CommentsJSONRenderer,
-                       CommentThreadJSONRenderer)
+from .renderer import CommentJSONRenderer, CommentThreadJSONRenderer
 from .serializers import CommentChildSerializer, CommentSerializer
 
 
@@ -17,7 +15,7 @@ from .serializers import CommentChildSerializer, CommentSerializer
 class CommentListCreateView(generics.ListCreateAPIView):
     serializer_class = CommentSerializer
     permission_classes = (IsAuthenticated,)
-    renderer_classes = (CommentsJSONRenderer,)
+    renderer_classes = (CommentJSONRenderer,)
     queryset = Comment.objects.all().filter(parent=None)
     lookup_field = 'slug'
 

@@ -1,33 +1,26 @@
 import json
+
 from authors.apps.articles.renderers import ArticleJSONRenderer
-from authors.apps.articles.serializers import ArticleSerializer
+from authors.apps.articles.serializers import ArticleSerializer, TagSerializer
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
+from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, render
 from rest_framework import generics, serializers, status
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.generics import ListCreateAPIView
-from rest_framework.permissions import (IsAuthenticated,
+from rest_framework.permissions import (AllowAny, IsAuthenticated,
                                         IsAuthenticatedOrReadOnly)
 from rest_framework.response import Response
-from .models import Article, RateArticle, LikeArticle
-from .renderers import ArticleJSONRenderer, RateUserJSONRenderer, LikeUserJSONRenderer
-from .serializers import ArticleSerializer, RateArticleSerializer, LikeArticleSerializer
-from .models import Article, RateArticle
-from django.shortcuts import render
-from rest_framework import generics
-from rest_framework import status
-from rest_framework.permissions import IsAuthenticated,IsAuthenticatedOrReadOnly, AllowAny
-from rest_framework.response import Response
-from authors.apps.articles.renderers import ArticleJSONRenderer, TagJSONRenderer
-from authors.apps.articles.serializers import ArticleSerializer, TagSerializer
-from rest_framework.exceptions import PermissionDenied
-from .models import Article
-from rest_framework import serializers
-from django.core.exceptions import ObjectDoesNotExist
+from taggit.models import Tag
+
 from .exceptions import TagHasNoArticles
-from taggit.models import Tag 
-from django.http import JsonResponse
+from .models import Article, LikeArticle, RateArticle
+from .renderers import (ArticleJSONRenderer, LikeUserJSONRenderer,
+                        RateUserJSONRenderer,TagJSONRenderer)
+from .serializers import (ArticleSerializer, LikeArticleSerializer,
+                          RateArticleSerializer)
+
 
 class TagListAPIView(generics.ListAPIView):
     queryset = Tag.objects.all()
@@ -39,8 +32,7 @@ class TagListAPIView(generics.ListAPIView):
 class TagRetrieveAPIView(generics.RetrieveAPIView):
 
     permission_classes = (AllowAny,)
-    renderer_classes = (TagJSONRenderer,)
-    serializer_class = TagSerializer
+    renderer_classes = (ArticleJSONRenderer,)
 
     def retrieve(self, request, *args, **kwargs):
         tag_name = self.kwargs["tag_name"]
@@ -162,27 +154,3 @@ class LikeAPIDetailsView(generics.RetrieveUpdateDestroyAPIView):
         serializer.is_valid(raise_exception=True)
         self.perform_update(serializer)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
-
-
-class RateArticleView(ListCreateAPIView):
-    permission_classes = (IsAuthenticated,)
-    renderer_classes = (RateUserJSONRenderer,)
-    queryset = RateArticle.objects.all()
-    serializer_class = RateArticleSerializer
-
-    def create(self, request, *args, **kwargs):
-        article_slug = get_object_or_404(Article, slug=self.kwargs['slug'])
-        get_rated_article = RateArticle.objects.filter(
-            article_id=article_slug.id, rated_by_id=request.user.id)
-        if article_slug.author_id == request.user.id:
-            return Response({"msg": "you can not rate your own article"})
-        if get_rated_article:
-            return Response({"msg": "you have already rated this article"})
-        rating = request.data.get('rate', {})
-        serializer = self.serializer_class(data=rating)
-        serializer.is_valid(raise_exception=True)
-        self.perform_create(serializer, article_slug)
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
-
-    def perform_create(self, serializer, article_slug):
-        serializer.save(rated_by=self.request.user, article=article_slug)

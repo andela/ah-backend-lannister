@@ -1,12 +1,10 @@
 #!/usr/bin/env python
-import os
 import sys
 
+from environment import select_env
+
 if __name__ == "__main__":
-    if os.environ.get('APP_SETTING') == "production":
-        os.environ.setdefault("DJANGO_SETTINGS_MODULE", "authors.settings.production")
-    else:
-        os.environ.setdefault("DJANGO_SETTINGS_MODULE", "authors.settings.development")
+    select_env()
     try:
         from django.core.management import execute_from_command_line
     except ImportError:

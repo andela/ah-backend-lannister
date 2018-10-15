@@ -71,21 +71,16 @@ class Article(models.Model):
         else:
             return int(ratings['rating__avg'])
 
-    def likes(self):
+    def like_cal(self, like):
         total_likes = LikeArticle.objects.filter(
-            article=self, likes=True).count()
-        if total_likes == 0:
-            return 0
-        else:
-            return total_likes
+            article=self, likes=like).count()
+        return total_likes
+
+    def likes(self):
+        return self.like_cal(True)
 
     def dislikes(self):
-        total_dislikes = LikeArticle.objects.filter(
-            article=self, likes=False).count()
-        if total_dislikes == 0:
-            return 0
-        else:
-            return total_dislikes
+        return self.like_cal(False)
 
 
 class RateArticle(models.Model):
