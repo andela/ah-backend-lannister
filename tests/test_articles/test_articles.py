@@ -3,13 +3,14 @@ from rest_framework.test import APIClient, APITestCase
 from rest_framework import status
 # from tests.test_authentication.test_base import BaseTest
 from ..test_authentication.test_base import BaseTest
-from authors.apps.articles.models import Article
+from authors.apps.articles.models import Article, Category
 from authors.apps.authentication.models import User
 
 class ArticlesTest(APITestCase,BaseTest):
     def setUp(self):
         BaseTest.__init__(self)
         self.client = APIClient()
+
 
     def create_login_user(self):
         user=User.objects.create_user(self.username,self.email,self.password)

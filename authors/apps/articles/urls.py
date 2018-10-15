@@ -1,7 +1,8 @@
 from django.urls import path
 
 from .views import (ArticleAPIView, ArticleAPIDetailsView, 
-            RateArticleView, LikeArticleView, LikeAPIDetailsView, TagListAPIView, TagRetrieveAPIView)
+            RateArticleView, LikeArticleView, LikeAPIDetailsView,
+             TagListAPIView, TagRetrieveAPIView, CategoryListCreateAPIView, CategoryRetrieveAPIView)
 
 app_name = "articles"
 
@@ -16,4 +17,7 @@ urlpatterns = [
          LikeAPIDetailsView.as_view(), name='dislike'),
     path("tags/", TagListAPIView.as_view()),
     path("tags/<str:tag_name>/", TagRetrieveAPIView.as_view()),
+    path("categories/", CategoryListCreateAPIView.as_view()),
+    path("categories/<str:cat_name>/", CategoryRetrieveAPIView.as_view()),
+
 ]

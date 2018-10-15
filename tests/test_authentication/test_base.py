@@ -1,3 +1,5 @@
+from authors.apps.articles.models import Category
+
 class BaseTest:
     """
     Class contains data to be used for testing
@@ -12,6 +14,12 @@ class BaseTest:
         self.title = "How to tnnrain your flywwwwwwwwwwf"
         self.description = "Ever wondner how toddddd ddddwwwwd?"
         self.body = "You have to benlieve becausedddddddddcf"
+
+        self.category = Category.objects.create(
+          title='test category',
+        )
+        
+
         self.reg_data = {
             "user": {
                 "username": self.username,
@@ -66,7 +74,9 @@ class BaseTest:
                 "description": self.description,
                 "body": self.body,
                 "tags": ["reactjs"],
-                "category_name": "Money"
+                
+                "category": self.category.id
+                
             }
         }
 
@@ -76,7 +86,8 @@ class BaseTest:
                 "description": self.description,
                 "body": self.body,
                 "tags": ["reactjs", "angularjs", "dragons"],
-                "category_name": "Money"
+                "category": self.category.id
+                
             }
         }
 
@@ -87,7 +98,8 @@ class BaseTest:
                 "description": "",
                 "body": "",
                 "tags": ["reactjs", "angularjs", "dragons"],
-                "category_name": "Money"
+                 "category": self.category.id
+                
             }
         }
         self.wrong_article_update = {
@@ -96,7 +108,8 @@ class BaseTest:
                 "description": "",
                 "body": "You cc",
                 "tags": ["reactjs", "angularjs", "dragons"],
-                "category_name": "Money"
+                "category": self.category.id
+                
             }
         }
         
@@ -106,7 +119,7 @@ class BaseTest:
                 "description": "How to manage carrying",
                 "body": "You cc",
                 "tags": ["reactjs", "angularjs", "dragons"],
-                "category_name": "Money"
+                "category": self.category.id
             }
         }
 
@@ -133,3 +146,5 @@ class BaseTest:
                 "likes": True,
             }
         }
+
+   

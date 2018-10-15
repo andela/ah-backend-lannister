@@ -1,24 +1,26 @@
-from authors.apps.articles.models import Article, RateArticle, LikeArticle
+from authors.apps.articles.models import Article, RateArticle, LikeArticle, Category
 from authors.apps.authentication.models import User
+from django.core.exceptions import ObjectDoesNotExist
 from rest_framework import serializers
 from taggit_serializer.serializers import (TagListSerializerField,
                                            TaggitSerializer)
                                           
 from taggit.models import Tag
 
+
 class ArticleSerializer(TaggitSerializer, serializers.ModelSerializer):
     """Serializer for articles."""
     author = serializers.ReadOnlyField(source='author.username')
     read_time = serializers.ReadOnlyField(source='read')
     tags = TagListSerializerField()
-
+    
     class Meta:
         model = Article
         """ List all of the fields that could possibly be included in a request
         or response, including fields specified explicitly above."""
 
         fields = ('author', 'title', 'slug', 'description',
-                  'body', 'created_at', 'updated_at', 'read_time', 'average_rating', 'likes', 'dislikes','tags',)
+                  'body', 'created_at', 'updated_at', 'read_time', 'average_rating', 'likes', 'dislikes','tags','category')
         read_only_fields = ('slug', 'author_id',)
 
 class TagSerializer(serializers.ModelSerializer):
@@ -26,6 +28,15 @@ class TagSerializer(serializers.ModelSerializer):
     class Meta:
         model = Tag
         fields = ('name',)
+
+class CategorySerializer(serializers.ModelSerializer):
+    
+
+    class Meta:
+        model = Category
+        fields = ('id','title','slug')
+        read_only_fields = ('id', 'slug',)
+
         
 class RateArticleSerializer(serializers.ModelSerializer):
     rated_by = serializers.ReadOnlyField(source='rated_by.username')
