@@ -7,13 +7,9 @@ For more information on this file, see
 https://docs.djangoproject.com/en/2.1/howto/deployment/wsgi/
 """
 
-import os
-
 from django.core.wsgi import get_wsgi_application
+from environment import select_env
 
-if os.environ.get('APP_SETTING') == "production":
-    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "authors.settings.production")
-else:
-    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "authors.settings.development")
+select_env()
 
 application = get_wsgi_application()

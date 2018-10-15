@@ -16,7 +16,7 @@ class Comment(models.Model):
     # the content of the comment
     body = models.TextField()
 
-    # true if the comment is a parent and false if its a child comment
+    # null if the comment is a parent and has the parent id if its a child comment
     parent = models.ForeignKey(
         "self", null=True, blank=True, on_delete=models.CASCADE)
 
