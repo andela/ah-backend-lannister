@@ -1,4 +1,4 @@
-from authors.apps.articles.models import Article,RateArticle
+from authors.apps.articles.models import Article, RateArticle, LikeArticle
 from authors.apps.authentication.models import User
 from rest_framework import serializers
 
@@ -14,7 +14,7 @@ class ArticleSerializer(serializers.ModelSerializer):
         or response, including fields specified explicitly above."""
 
         fields = ('author', 'title', 'slug', 'description',
-                  'body', 'created_at', 'updated_at', 'read_time','average_rating')
+                  'body', 'created_at', 'updated_at', 'read_time', 'average_rating', 'likes', 'dislikes')
         read_only_fields = ('slug', 'author_id',)
 
 
@@ -36,3 +36,22 @@ class RateArticleSerializer(serializers.ModelSerializer):
         return {
             "rating": rating,
         }
+
+
+class LikeArticleSerializer(serializers.ModelSerializer):
+    liked_by = serializers.ReadOnlyField(source='liked_by.username')
+    article = serializers.ReadOnlyField(source='article.slug')
+
+    class Meta:
+        model = LikeArticle
+        fields = ['liked_by', 'article', 'likes']
+
+    def validate(self, data):
+        likes = data.get('likes')
+        if likes == None:
+            raise serializers.ValidationError(
+                {"likes": "This field is required"}
+            )
+
+        return {
+            "likes": likes}

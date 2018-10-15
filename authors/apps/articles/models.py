@@ -2,7 +2,7 @@ from authors.apps.authentication.models import User
 from django.conf import settings
 from django.contrib.postgres.fields import ArrayField
 from django.db import models
-from django.db.models import Avg
+from django.db.models import Avg, Count
 from django.utils import timezone
 from django.utils.text import slugify
 
@@ -65,6 +65,22 @@ class Article(models.Model):
         else:
             return int(ratings['rating__avg'])
 
+    def likes(self):
+        total_likes = LikeArticle.objects.filter(
+            article=self, likes=True).count()
+        if total_likes == 0:
+            return 0
+        else:
+            return total_likes
+
+    def dislikes(self):
+        total_dislikes = LikeArticle.objects.filter(
+            article=self, likes=False).count()
+        if total_dislikes == 0:
+            return 0
+        else:
+            return total_dislikes
+
 
 class RateArticle(models.Model):
     rated_by = models.ForeignKey(User, blank=False, on_delete=models.CASCADE)
@@ -74,3 +90,11 @@ class RateArticle(models.Model):
     article = models.ForeignKey(Article, blank=False, on_delete=models.CASCADE)
 
     rating = models.IntegerField(blank=False, null=False, default=0)
+
+
+class LikeArticle(models.Model):
+    liked_by = models.ForeignKey(User, blank=False, on_delete=models.CASCADE)
+
+    article = models.ForeignKey(Article, blank=False, on_delete=models.CASCADE)
+
+    likes = models.NullBooleanField()

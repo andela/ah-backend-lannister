@@ -10,9 +10,9 @@ from rest_framework.generics import ListCreateAPIView
 from rest_framework.permissions import (IsAuthenticated,
                                         IsAuthenticatedOrReadOnly)
 from rest_framework.response import Response
-from .models import Article, RateArticle
-from .renderers import ArticleJSONRenderer, RateUserJSONRenderer
-from .serializers import ArticleSerializer, RateArticleSerializer
+from .models import Article, RateArticle, LikeArticle
+from .renderers import ArticleJSONRenderer, RateUserJSONRenderer, LikeUserJSONRenderer
+from .serializers import ArticleSerializer, RateArticleSerializer, LikeArticleSerializer
 
 
 class ArticleAPIView(generics.ListCreateAPIView):
@@ -31,7 +31,7 @@ class ArticleAPIView(generics.ListCreateAPIView):
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
     def perform_create(self, serializer):
-        serializer.save(author=self.request.user)   
+        serializer.save(author=self.request.user)
 
 
 class ArticleAPIDetailsView(generics.RetrieveUpdateDestroyAPIView):
@@ -57,6 +57,73 @@ class ArticleAPIDetailsView(generics.RetrieveUpdateDestroyAPIView):
             raise PermissionDenied
         serializer = self.get_serializer(
             instance, data=article_dict, partial=partial)
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+
+class RateArticleView(ListCreateAPIView):
+    permission_classes = (IsAuthenticated,)
+    renderer_classes = (RateUserJSONRenderer,)
+    queryset = RateArticle.objects.all()
+    serializer_class = RateArticleSerializer
+
+    def create(self, request, *args, **kwargs):
+        article_slug = get_object_or_404(Article, slug=self.kwargs['slug'])
+        get_rated_article = RateArticle.objects.filter(
+            article_id=article_slug.id, rated_by_id=request.user.id)
+        if article_slug.author_id == request.user.id:
+            return Response({"msg": "you can not rate your own article"})
+        if get_rated_article:
+            return Response({"msg": "you have already rated this article"})
+        rating = request.data.get('rate', {})
+        serializer = self.serializer_class(data=rating)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer, article_slug)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+    def perform_create(self, serializer, article_slug):
+        serializer.save(rated_by=self.request.user, article=article_slug)
+
+
+class LikeArticleView(ListCreateAPIView):
+    permission_classes = (IsAuthenticated,)
+    renderer_classes = (LikeUserJSONRenderer,)
+    queryset = LikeArticle.objects.all()
+    serializer_class = LikeArticleSerializer
+
+    def create(self, request, *args, **kwargs):
+        article_slug = get_object_or_404(Article, slug=self.kwargs['slug'])
+        instance = LikeArticle.objects.filter(
+            article_id=article_slug.id, liked_by_id=request.user.id).first()
+        if instance:
+            return Response({"msg": "you can only like an article once"}, status=status.HTTP_400_BAD_REQUEST)
+
+        liking = request.data.get('like', {})
+        serializer = self.serializer_class(data=liking)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer, article_slug)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+    def perform_create(self, serializer, article_slug):
+        serializer.save(liked_by=self.request.user, article=article_slug)
+
+
+class LikeAPIDetailsView(generics.RetrieveUpdateDestroyAPIView):
+    """retreive, update and delete an article """
+    permission_classes = (IsAuthenticatedOrReadOnly,)
+    renderer_classes = (LikeUserJSONRenderer,)
+    serializer_class = LikeArticleSerializer
+    queryset = LikeArticle.objects.all()
+
+    def update(self, request, *args, **kwargs):
+        article_slug = get_object_or_404(Article, slug=self.kwargs['slug'])
+        liking = request.data.get("like", {})
+        instance = LikeArticle.objects.filter(
+            article_id=article_slug.id, liked_by_id=request.user.id).first()
+        if not instance:
+            raise PermissionDenied
+        serializer = self.get_serializer(instance, data=liking)
         serializer.is_valid(raise_exception=True)
         self.perform_update(serializer)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
