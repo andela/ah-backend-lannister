@@ -8,7 +8,11 @@ from django.utils.text import slugify
 
 from .utils import get_unique_slug, time
 
-# Create your models here.
+from django.contrib.postgres.fields import ArrayField
+from authors.apps.authentication.models import User
+from .utils import get_unique_slug,time
+from taggit.managers import TaggableManager
+
 
 
 class Article(models.Model):
@@ -36,6 +40,8 @@ class Article(models.Model):
     favorites_count = models.IntegerField(default=0)
 
     read_time = models.TimeField(null=True, blank=True)
+
+    tags = TaggableManager()
 
     def __str__(self):
         """

@@ -38,6 +38,38 @@ class ArticleJSONRenderer(JSONRenderer):
             return json.dumps({
                 'articles': data
             })
+
+class TagJSONRenderer(JSONRenderer):
+    """
+    Override default renderer to customise output
+    """
+    charset = 'utf-8'
+
+    def render(self, data, accepted_media_type=None, renderer_context=None):
+        """
+        render response data
+        :param data:
+        :param accepted_media_type:
+        :param renderer_context:
+        :return:
+        """
+        if type(data) != ReturnList:
+            errors = data.get('errors', None)
+            if errors is not None:
+                return super(TagJSONRenderer, self).render(data)
+
+        if type(data) == ReturnDict:
+            # single article
+            return json.dumps({
+                'article': data
+            })
+
+        # Finally, we can render our data under the "user" namespace.
+        else:
+            # many articles
+            return json.dumps({
+                'articles': data
+            })
             
 class RateUserJSONRenderer(JSONRenderer):
     charset = 'utf-8'

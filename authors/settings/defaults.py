@@ -56,6 +56,8 @@ INSTALLED_APPS = [
     'authors.apps.articles',
     'rest_framework_swagger',
     'authors.apps.comments',
+    'taggit',
+    'taggit_serializer',
 ]
 
 
