@@ -58,8 +58,8 @@ INSTALLED_APPS = [
     'authors.apps.comments',
     'taggit',
     'taggit_serializer',
+    'django_filters',
 ]
-
 
 
 MIDDLEWARE = [
@@ -162,6 +162,9 @@ REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'authors.apps.authentication.backends.JWTAuthentication',
     ),
+    'DEFAULT_FILTER_BACKENDS': (
+        'django_filters.rest_framework.DjangoFilterBackend',
+        )
     
 }
 

@@ -17,6 +17,8 @@ from taggit.models import Tag
 
 from .exceptions import TagHasNoArticles, CatHasNoArticles
 from .models import Article, LikeArticle, RateArticle, Category
+from rest_framework import filters
+from .exceptions import TagHasNoArticles
 from .renderers import (ArticleJSONRenderer, LikeUserJSONRenderer,
                         RateUserJSONRenderer, TagJSONRenderer, CategoryJSONRenderer)
 from .serializers import (ArticleSerializer, LikeArticleSerializer,
@@ -83,6 +85,9 @@ class ArticleAPIView(generics.ListCreateAPIView):
     permission_classes = (IsAuthenticatedOrReadOnly,)
     renderer_classes = (ArticleJSONRenderer,)
     serializer_class = ArticleSerializer
+    filter_backends = (filters.SearchFilter,)
+    search_fields = (
+    'title', 'author__username', 'description', 'body', 'tags__name',)
 
     def create(self, request, *args, **kwargs):
         article = request.data.get("article", {})
@@ -90,10 +95,24 @@ class ArticleAPIView(generics.ListCreateAPIView):
         serializer.is_valid(raise_exception=True)
         self.perform_create(serializer)
         headers = self.get_success_headers(serializer.data)
-        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+        return Response(
+            serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
     def perform_create(self, serializer):
         serializer.save(author=self.request.user)
+
+    def get_queryset(self):
+        queryset = self.queryset
+        tag = self.request.query_params.get('tag', None)
+        if tag is not None:
+            queryset = queryset.filter(tags__name=tag)
+        author = self.request.query_params.get('author', None)
+        if author is not None:
+            queryset = queryset.filter(author__username=author)
+        title = self.request.query_params.get('title', None)
+        if title is not None:
+            queryset = queryset.filter(title__icontains=title) 
+        return queryset
 
 
 class ArticleAPIDetailsView(generics.RetrieveUpdateDestroyAPIView):
@@ -109,7 +128,8 @@ class ArticleAPIDetailsView(generics.RetrieveUpdateDestroyAPIView):
         if instance.author != request.user:
             raise PermissionDenied
         self.perform_destroy(instance)
-        return Response({"message": "article deleted"}, status=status.HTTP_200_OK)
+        return Response({"message": "article deleted"}, 
+        status=status.HTTP_200_OK)
 
     def update(self, request, *args, **kwargs):
         article_dict = request.data.get("article", {})
@@ -189,30 +209,6 @@ class LikeAPIDetailsView(generics.RetrieveUpdateDestroyAPIView):
         serializer.is_valid(raise_exception=True)
         self.perform_update(serializer)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
-
-
-class RateArticleView(ListCreateAPIView):
-    permission_classes = (IsAuthenticated,)
-    renderer_classes = (RateUserJSONRenderer,)
-    queryset = RateArticle.objects.all()
-    serializer_class = RateArticleSerializer
-
-    def create(self, request, *args, **kwargs):
-        article_slug = get_object_or_404(Article, slug=self.kwargs['slug'])
-        get_rated_article = RateArticle.objects.filter(
-            article_id=article_slug.id, rated_by_id=request.user.id)
-        if article_slug.author_id == request.user.id:
-            return Response({"msg": "you can not rate your own article"})
-        if get_rated_article:
-            return Response({"msg": "you have already rated this article"})
-        rating = request.data.get('rate', {})
-        serializer = self.serializer_class(data=rating)
-        serializer.is_valid(raise_exception=True)
-        self.perform_create(serializer, article_slug)
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
-
-    def perform_create(self, serializer, article_slug):
-        serializer.save(rated_by=self.request.user, article=article_slug)
 
 
 class FavoriteArticleView(generics.CreateAPIView):
