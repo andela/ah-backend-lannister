@@ -7,22 +7,24 @@ from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, render
 from rest_framework import generics, serializers, status
-from rest_framework.exceptions import PermissionDenied
+from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.generics import ListCreateAPIView
 from rest_framework.permissions import (AllowAny, IsAuthenticated,
                                         IsAuthenticatedOrReadOnly)
 from rest_framework.response import Response
+from django.http import JsonResponse
 from taggit.models import Tag
 
-from .exceptions import TagHasNoArticles
-from .models import Article, LikeArticle, RateArticle
+from .exceptions import TagHasNoArticles, CatHasNoArticles
+from .models import Article, LikeArticle, RateArticle, Category
 from .renderers import (ArticleJSONRenderer, LikeUserJSONRenderer,
-                        RateUserJSONRenderer,TagJSONRenderer)
+                        RateUserJSONRenderer,TagJSONRenderer, CategoryJSONRenderer)
 from .serializers import (ArticleSerializer, LikeArticleSerializer,
-                          RateArticleSerializer)
+                          RateArticleSerializer, CategorySerializer)
 
 
 class TagListAPIView(generics.ListAPIView):
+    """ List all tags  """
     queryset = Tag.objects.all()
     permission_classes = (AllowAny,)
     renderer_classes = (TagJSONRenderer,)
@@ -30,7 +32,7 @@ class TagListAPIView(generics.ListAPIView):
 
 
 class TagRetrieveAPIView(generics.RetrieveAPIView):
-
+    """ Get articles under a specific tag """
     permission_classes = (AllowAny,)
     renderer_classes = (ArticleJSONRenderer,)
 
@@ -41,6 +43,38 @@ class TagRetrieveAPIView(generics.RetrieveAPIView):
             return JsonResponse({'articles': list(tags)}, status=status.HTTP_200_OK)
         else:
             raise TagHasNoArticles("This tag currently has no articles")
+
+class CategoryListCreateAPIView(generics.ListCreateAPIView):
+    """ List / Create categories """ 
+        
+    queryset = Category.objects.all()
+    permission_classes = (AllowAny,)
+    serializer_class = CategorySerializer
+    renderer_classes = (CategoryJSONRenderer,)
+
+    def create(self, request):
+        category = Category.objects.filter(
+            title=request.data.get('title'),
+        )
+        if category:
+            raise ValidationError("Category with this title already exists")
+        return super().create(request)
+
+
+class CategoryRetrieveAPIView(generics.RetrieveAPIView):
+    """ Get articles under a specific category """
+    permission_classes = (AllowAny,)
+    serializer_class = ArticleSerializer
+
+    def retrieve(self, request, *args, **kwargs):
+        try:
+            cat_name = self.kwargs["cat_name"]
+            category = Category.objects.get(title=cat_name)
+            articles = Article.objects.filter(category=category).values()
+            return Response({'articles': articles}, status=status.HTTP_200_OK)
+        except ObjectDoesNotExist:
+            raise CatHasNoArticles("The category currently has no articles")
+
 
 class ArticleAPIView(generics.ListCreateAPIView):
     """create an article, list all articles paginated to 5 per page"""

@@ -14,6 +14,20 @@ from .utils import get_unique_slug,time
 from taggit.managers import TaggableManager
 
 
+class Category(models.Model):
+      title = models.CharField(max_length=100)
+      slug = models.SlugField(max_length=100, unique=True)
+
+      class Meta: 
+        verbose_name_plural = "Categories"
+
+      def __str__(self):
+          return self.title
+
+      def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = get_unique_slug(self, 'title', 'slug')
+        return super().save(*args, **kwargs)
 
 class Article(models.Model):
     """
@@ -42,6 +56,9 @@ class Article(models.Model):
     read_time = models.TimeField(null=True, blank=True)
 
     tags = TaggableManager()
+
+    category = models.ForeignKey(Category, 
+                                 on_delete=models.CASCADE)
 
     def __str__(self):
         """
