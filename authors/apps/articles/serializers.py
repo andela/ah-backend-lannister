@@ -20,7 +20,7 @@ class ArticleSerializer(TaggitSerializer, serializers.ModelSerializer):
         or response, including fields specified explicitly above."""
 
         fields = ('author', 'title', 'slug', 'description',
-                  'body', 'created_at', 'updated_at', 'read_time', 'average_rating', 'likes', 'dislikes','tags','category')
+                  'body', 'created_at', 'updated_at', 'read_time', 'average_rating', 'likes', 'dislikes','tags','category','favorites_count')
         read_only_fields = ('slug', 'author_id',)
 
 class TagSerializer(serializers.ModelSerializer):
@@ -78,3 +78,5 @@ class LikeArticleSerializer(serializers.ModelSerializer):
             "likes": likes}
 
 
+    def get_favorites_count(self, instance):
+        return instance.favorited_by.count()
