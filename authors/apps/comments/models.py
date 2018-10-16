@@ -1,4 +1,5 @@
 from django.db import models
+from django.db.models.signals import post_save
 
 from authors.apps.articles.models import Article
 from authors.apps.authentication.models import User
@@ -22,7 +23,6 @@ class Comment(models.Model):
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    # objects = CommentManager()
 
     def children(self):
         return Comment.objects.filter(parent=self)
@@ -32,3 +32,17 @@ class Comment(models.Model):
         if self.parent is not True:
             return False
         return True
+
+
+class CommentHistory(models.Model):
+    comment = models.ForeignKey(Comment, on_delete=models.CASCADE)
+    body = models.TextField()
+    updated_at = models.DateTimeField(auto_now_add=True)
+
+
+def create_history(sender, **kwargs):
+    body = kwargs['instance'].body
+    CommentHistory.objects.create(comment=kwargs['instance'], body=body)
+
+
+post_save.connect(create_history, sender=Comment)

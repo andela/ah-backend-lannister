@@ -1,17 +1,22 @@
-from authors.apps.articles.models import Article
+from django.db.models import Count
 from django.shortcuts import get_object_or_404, render
 from rest_framework import generics, serializers, status
 from rest_framework.exceptions import PermissionDenied
-from rest_framework.permissions import (IsAuthenticated,
+from rest_framework.permissions import (AllowAny, IsAuthenticated,
                                         IsAuthenticatedOrReadOnly)
 from rest_framework.response import Response
 
-from .models import Comment
-from .renderer import CommentJSONRenderer, CommentThreadJSONRenderer
-from .serializers import CommentChildSerializer, CommentSerializer
+from authors.apps.articles.models import Article
 
+from .models import Comment, CommentHistory
+from .renderer import (CommentHistoryJSONRenderer, CommentJSONRenderer,
+                       CommentThreadJSONRenderer)
+from .serializers import (CommentChildSerializer, CommentHistorySerializer,
+                          CommentSerializer)
 
 # Create your views here.
+
+
 class CommentListCreateView(generics.ListCreateAPIView):
     serializer_class = CommentSerializer
     permission_classes = (IsAuthenticated,)
@@ -101,4 +106,19 @@ class CommentThreadListCreateView(generics.RetrieveAPIView):
         comment = self.queryset.filter(
             slug=article_slug, parent=self.kwargs['id'])
         serializer = self.serializer_class(comment, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class CommentHistoryView(generics.ListAPIView):
+    serializer_class = CommentHistorySerializer
+    permission_classes = (IsAuthenticatedOrReadOnly,)
+    renderer_classes = (CommentHistoryJSONRenderer,)
+    queryset = CommentHistory.objects.all()
+
+    def get(self, request, *args, **kwargs):
+        comment_history = self.queryset.filter(
+            comment_id=self.kwargs['id'])
+        if comment_history.count() < 2:
+            return Response({"msg": "This comment has never been edited"})
+        serializer = self.serializer_class(comment_history, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)

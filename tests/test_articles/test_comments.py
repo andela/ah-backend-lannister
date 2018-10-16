@@ -131,7 +131,22 @@ class CommentTest(APITestCase, BaseTest):
             f'/api/articles/{self.slug}/comments/{comment_id}/thread',format="json")
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         
-    
+    def test_retrieve_edit_history(self):
+        comment = self.create_a_comment()
+        comment_id = comment.data['id']
+        self.client.put(
+            f'/api/articles/{self.slug}/comments/{comment_id}', self.test_comment_edited, format="json")
+        response =self.client.get(
+            f'/api/articles/{self.slug}/comments/{comment_id}/edit-history/')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_no_edit_history(self):
+        comment=self.create_a_comment()
+        comment_id = comment.data['id']
+        response =self.client.get(
+            f'/api/articles/{self.slug}/comments/{comment_id}/edit-history/')
+        self.assertIn("never been edited", str(response.data))
+        
 
 
     

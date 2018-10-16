@@ -9,3 +9,6 @@ class CommentJSONRenderer(AhJSONRenderer):
 class CommentThreadJSONRenderer(AhJSONRenderer):
     charset = 'utf-8'
     object_label = 'thread'
+
+class CommentHistoryJSONRenderer(AhJSONRenderer):
+    object_label = 'edit-version'
