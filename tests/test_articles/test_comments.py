@@ -130,6 +130,49 @@ class CommentTest(APITestCase, BaseTest):
         response = self.client.post(
             f'/api/articles/{self.slug}/comments/{comment_id}/thread',format="json")
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_create_selection_comment(self):
+        self.test_comment=self.test_commentselection
+        response = self.create_a_comment()
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+    def test_invalid_selection_comment(self):
+        self.test_comment=self.test_commentselection
+        self.test_comment['comment']['start_position']=100
+        response = self.create_a_comment()
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+    
+    def test_update_selection_comment(self):
+        self.test_comment=self.test_commentselection
+        comment = self.create_a_comment()
+        comment_id = comment.data['id']
+        response = self.client.put(
+            f'/api/articles/{self.slug}/comments/{comment_id}', self.test_comment_edited, format="json")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+    
+    def test_invalid_update_selection_comment(self):
+        self.test_comment=self.test_commentselection
+        comment = self.create_a_comment()
+        comment_id = comment.data['id']
+        self.test_comment_edited=self.test_commentselection
+        self.test_comment_edited['comment']['start_position']=200
+        response = self.client.put(
+            f'/api/articles/{self.slug}/comments/{comment_id}', self.test_comment_edited, format="json")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+    
+    def test_invalid_range(self):
+        self.test_comment=self.test_commentselection
+        self.test_comment['comment']['start_position']=900000000000000000000
+        response = self.create_a_comment()
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_invalid_position_on_an_int(self):
+        self.test_comment=self.test_commentselection
+        self.test_comment['comment']['start_position']='werte'
+        response = self.create_a_comment()
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+
         
     def test_retrieve_edit_history(self):
         comment = self.create_a_comment()

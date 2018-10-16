@@ -23,7 +23,10 @@ class Comment(models.Model):
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-
+    article_section=models.TextField(blank=True,null=True) 
+    start_position=models.CharField(max_length=500,blank=True,null=True)
+    end_position=models.CharField(max_length=500,blank=True,null=True)
+        
     def children(self):
         return Comment.objects.filter(parent=self)
 

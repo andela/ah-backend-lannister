@@ -5,6 +5,7 @@ from rest_framework.exceptions import PermissionDenied
 from rest_framework.permissions import (AllowAny, IsAuthenticated,
                                         IsAuthenticatedOrReadOnly)
 from rest_framework.response import Response
+from rest_framework.serializers import ValidationError
 
 from authors.apps.articles.models import Article
 
@@ -25,13 +26,25 @@ class CommentListCreateView(generics.ListCreateAPIView):
     lookup_field = 'slug'
 
     def post(self, request, *args, **kwargs):
-        article_slug = self.kwargs['slug']
-        slug = get_object_or_404(Article, slug=article_slug)
-        comment = request.data.get('comment', {})
+        comment, slug = self.get_comment_input(request)
         serializer = self.serializer_class(data=comment, partial=True)
         serializer.is_valid(raise_exception=True)
         self.perform_create(serializer, slug)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+    def get_comment_input(self, request):
+        article_slug = self.kwargs['slug']
+        slug = get_object_or_404(Article, slug=article_slug)
+        comment = request.data.get('comment', {})
+        if 'end_position' in comment and 'start_position' in comment:
+            end_position = comment.get('end_position', 0)
+            start_position = comment.get('start_position', 0)
+
+            if type(end_position) != int or type(start_position) != int:
+                raise ValidationError('one of the positions is not an integer')
+            article_section = slug.body[start_position:end_position]
+            comment['article_section'] = article_section
+        return comment, slug
 
     def perform_create(self, serializer, slug):
         serializer.save(author=self.request.user, slug=slug)
@@ -64,12 +77,11 @@ class CommentsView(generics.RetrieveUpdateDestroyAPIView):
             raise PermissionDenied
 
     def update(self, request, *args, **kwargs):
-        comment = request.data.get("comment", {})
-        article_slug = self.kwargs['slug']
-        slug = get_object_or_404(Article, slug=article_slug)
+        comment, slug = CommentListCreateView.get_comment_input(self, request)
         instance = self.get_object()
         self.check_user(instance, request)
-        serializer = self.get_serializer(instance, data=comment, partial=True)
+        serializer = self.get_serializer(
+            instance, data=comment, partial=True)
         serializer.is_valid(raise_exception=True)
         self.perform_update(serializer)
         return Response(serializer.data, status=status.HTTP_200_OK)
