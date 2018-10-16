@@ -8,8 +8,10 @@ from rest_framework.response import Response
 from rest_framework.serializers import ValidationError
 
 from authors.apps.articles.models import Article
+from .models import Comment, LikeComment, CommentHistory
+from .renderer import CommentJSONRenderer, CommentThreadJSONRenderer
+from .serializers import CommentChildSerializer, CommentSerializer, LikeCommentSerializer
 
-from .models import Comment, CommentHistory
 from .renderer import (CommentHistoryJSONRenderer, CommentJSONRenderer,
                        CommentThreadJSONRenderer)
 from .serializers import (CommentChildSerializer, CommentHistorySerializer,
@@ -133,4 +135,64 @@ class CommentHistoryView(generics.ListAPIView):
         if comment_history.count() < 2:
             return Response({"msg": "This comment has never been edited"})
         serializer = self.serializer_class(comment_history, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class LikeCommentView(generics.ListCreateAPIView):
+    permission_classes = (IsAuthenticated,)
+    renderer_classes = (CommentJSONRenderer,)
+    serializer_class = LikeCommentSerializer    
+
+    lookup_fields = 'id', 'slug'
+    queryset = Comment.objects.all().filter(parent__isnull=True)
+
+    def create(self, request, *args, **kwargs):
+        comment=get_object_or_404(Comment,id=self.kwargs['id'])
+
+        if comment.author_id == request.user.id:
+            return Response({"message":"you can't like your own comment"},status=status.HTTP_400_BAD_REQUEST)
+
+        instance = LikeComment.objects.filter(comment_id=comment.id,liked_by_id=request.user.id)
+        if instance:
+            return Response({"message": "you have already liked the comment"}, status=status.HTTP_400_BAD_REQUEST)
+        comment.likes_count += 1
+        
+        comment.save()
+        likes = comment.likes_count
+
+        serializer = self.serializer_class(data=comment.__dict__)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer, comment, likes)
+        return Response(serializer.data)
+    
+    def perform_create(self, serializer, comment, likes):
+        serializer.save(liked_by=self.request.user, comment=comment, likes = likes)
+   
+class UnLikeCommentView(generics.DestroyAPIView):
+    permission_classes = (IsAuthenticated,)
+    renderer_classes = (CommentJSONRenderer,)
+    serializer_class = CommentSerializer    
+
+    lookup_fields = 'id', 'slug'
+    queryset = Comment.objects.all().filter(parent__isnull=True)
+
+   
+    def delete(self, request, *args, **kwargs):
+
+        comment=get_object_or_404(Comment,id=self.kwargs['id'])
+        
+        try:
+            instance = LikeComment.objects.get(comment_id=comment.id,liked_by_id=request.user.id)
+        except:
+            return Response({'message': 'This is not a comment you like.'},
+                            status=status.HTTP_404_NOT_FOUND)
+
+        if comment.likes_count > 0:
+            comment.likes_count -=1
+
+        
+        comment.save()
+        instance.delete()
+        serializer = self.serializer_class(comment)
+
         return Response(serializer.data, status=status.HTTP_200_OK)

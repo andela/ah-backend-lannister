@@ -1,7 +1,7 @@
 from django.db import models
 from django.db.models.signals import post_save
 
-from authors.apps.articles.models import Article
+from authors.apps.articles.models import Article,LikeArticle
 from authors.apps.authentication.models import User
 
 # Create your models here.
@@ -26,6 +26,7 @@ class Comment(models.Model):
     article_section=models.TextField(blank=True,null=True) 
     start_position=models.CharField(max_length=500,blank=True,null=True)
     end_position=models.CharField(max_length=500,blank=True,null=True)
+    likes_count = models.IntegerField(default=0)
         
     def children(self):
         return Comment.objects.filter(parent=self)
@@ -49,3 +50,10 @@ def create_history(sender, **kwargs):
 
 
 post_save.connect(create_history, sender=Comment)
+
+class LikeComment(models.Model):
+    liked_by = models.ForeignKey(User, blank=False, on_delete=models.CASCADE)
+
+    comment = models.ForeignKey(Comment, blank=False, on_delete=models.CASCADE)
+
+    likes = models.IntegerField(default=0)

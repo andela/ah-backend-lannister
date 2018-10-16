@@ -4,7 +4,7 @@ from rest_framework import serializers
 from authors.apps.authentication.models import User
 from authors.apps.profiles.models import Profile
 
-from .models import Comment, CommentHistory
+from .models import Comment, CommentHistory, LikeComment
 
 
 class CommentSerializer(serializers.ModelSerializer):
@@ -20,7 +20,7 @@ class CommentSerializer(serializers.ModelSerializer):
         model = Comment
         fields = ('id', 'section', 'body', 'author', 'replies',
                   'created_at', 'updated_at', 'parent',
-                  'end_position', 'start_position', 'article_section')
+                  'end_position', 'start_position', 'article_section','likes_count')
 
     def get_is_parent(self, obj):
         if not obj.is_parent:
@@ -74,7 +74,19 @@ class CommentChildSerializer(serializers.ModelSerializer):
 
 
 class CommentHistorySerializer(serializers.ModelSerializer):
-
+    
     class Meta:
         model = CommentHistory
         fields = ('comment', 'body', 'updated_at')
+class LikeCommentSerializer(serializers.ModelSerializer):
+    liked_by = serializers.ReadOnlyField(source='liked_by.username')
+    comment = serializers.SerializerMethodField('get_acomment')
+    likes = serializers.ReadOnlyField()
+
+
+    class Meta:
+        model = LikeComment
+        fields = ['liked_by', 'comment', 'likes',]
+
+    def get_acomment(self,obj):
+        return CommentSerializer(obj.comment).data
