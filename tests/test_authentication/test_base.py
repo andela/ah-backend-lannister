@@ -1,5 +1,6 @@
 from authors.apps.articles.models import Category
 
+
 class BaseTest:
     """
     Class contains data to be used for testing
@@ -16,9 +17,8 @@ class BaseTest:
         self.body = "You have to benlieve becausedddddddddcf"
 
         self.category = Category.objects.create(
-          title='test category',
+            title='test category',
         )
-        
 
         self.reg_data = {
             "user": {
@@ -74,9 +74,9 @@ class BaseTest:
                 "description": self.description,
                 "body": self.body,
                 "tags": ["reactjs"],
-                
+
                 "category": self.category.id
-                
+
             }
         }
 
@@ -87,19 +87,18 @@ class BaseTest:
                 "body": self.body,
                 "tags": ["reactjs", "angularjs", "dragons"],
                 "category": self.category.id
-                
+
             }
         }
 
-        
         self.empty_create_article = {
             "article": {
                 "title": "",
                 "description": "",
                 "body": "",
                 "tags": ["reactjs", "angularjs", "dragons"],
-                 "category": self.category.id
-                
+                "category": self.category.id
+
             }
         }
         self.wrong_article_update = {
@@ -109,10 +108,10 @@ class BaseTest:
                 "body": "You cc",
                 "tags": ["reactjs", "angularjs", "dragons"],
                 "category": self.category.id
-                
+
             }
         }
-        
+
         self.update_article = {
             "article": {
                 "title": "beattr",
@@ -127,6 +126,13 @@ class BaseTest:
             "comment": {
 
                 "body": "iidtfygubbbhjgfhtimes",
+            }
+        }
+        self.test_commentselection = {
+            "comment": {
+                "body": "His name was my name too.",
+                "start_position": 0,
+                "end_position": 4
             }
         }
         self.test_comment_edited = {
@@ -146,5 +152,3 @@ class BaseTest:
                 "likes": True,
             }
         }
-
-   

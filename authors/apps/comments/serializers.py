@@ -11,11 +11,16 @@ class CommentSerializer(serializers.ModelSerializer):
     replies = serializers.SerializerMethodField('get_is_parent')
     author = serializers.SerializerMethodField()
     parent = serializers.ReadOnlyField(source='authors.parent')
+    section = serializers.SerializerMethodField()
+    end_position = serializers.IntegerField(write_only=True)
+    start_position = serializers.IntegerField(write_only=True)
+    article_section = serializers.CharField(write_only=True)
 
     class Meta:
         model = Comment
-        fields = ('id', 'body', 'author', 'replies',
-                  'created_at', 'updated_at', 'parent')
+        fields = ('id', 'section', 'body', 'author', 'replies',
+                  'created_at', 'updated_at', 'parent',
+                  'end_position', 'start_position', 'article_section')
 
     def get_is_parent(self, obj):
         if not obj.is_parent:
@@ -28,6 +33,20 @@ class CommentSerializer(serializers.ModelSerializer):
 
     def validate(self, data):
         return CommentChildSerializer.validate(self, data)
+
+    def get_section(self, obj):
+        if obj.article_section:
+            return SelectionSerializer(obj).data
+        return None
+
+
+class SelectionSerializer(serializers.ModelSerializer):
+    end_position = serializers.IntegerField()
+    start_position = serializers.IntegerField()
+
+    class Meta:
+        model = Comment
+        fields = ('article_section', 'end_position', 'start_position')
 
 
 class ProfileSerializer(serializers.ModelSerializer):

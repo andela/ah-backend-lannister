@@ -364,9 +364,35 @@ Example request body:
 Authentication required, returns the created Comment
 Required field: `body`
 
+### Add Comments to a highlighted text in an article
+
+`POST /api/articles/:slug/comments`
+
+Example request body:
+
+```source-json
+{
+  "comment": {
+    "body": "this is the best tense to use",
+    "start_position":23,
+    "end_position":50000
+    
+  }
+}
+```
+
+Authentication required, returns the created Comment
+Required field: `body` ,`start_position`,`end_position`
+
 ### Get Comments from an Article
 
 `GET /api/articles/:slug/comments`
+
+Authentication optional, returns multiple comments
+
+### Add reply to a comments from an Article
+
+`POST /api/articles/:slug/comments/:id/thread`
 
 Authentication optional, returns multiple comments
 
