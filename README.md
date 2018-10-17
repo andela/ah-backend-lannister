@@ -424,6 +424,23 @@ No additional parameters required
 
 `GET /api/tags`
 
+### Report an article
+
+`POST /api/articles/:slug/report/`
+
+Authentication  and reason for reporting required
+Request Body
+```source-json
+{
+  "report": {
+    "reason": "this is not the best tense to use"
+    
+  }
+}
+```
+
+
+
 
 
 

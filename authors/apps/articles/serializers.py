@@ -1,11 +1,12 @@
-from authors.apps.articles.models import Article, RateArticle, LikeArticle, Category
-from authors.apps.authentication.models import User
 from django.core.exceptions import ObjectDoesNotExist
 from rest_framework import serializers
-from taggit_serializer.serializers import (TagListSerializerField,
-                                           TaggitSerializer)
-                                          
+
+from authors.apps.articles.models import (Article, Category, LikeArticle,
+                                          RateArticle, Reported)
+from authors.apps.authentication.models import User
 from taggit.models import Tag
+from taggit_serializer.serializers import (TaggitSerializer,
+                                           TagListSerializerField)
 
 
 class ArticleSerializer(TaggitSerializer, serializers.ModelSerializer):
@@ -13,33 +14,34 @@ class ArticleSerializer(TaggitSerializer, serializers.ModelSerializer):
     author = serializers.ReadOnlyField(source='author.username')
     read_time = serializers.ReadOnlyField(source='read')
     tags = TagListSerializerField()
-    
+
     class Meta:
         model = Article
         """ List all of the fields that could possibly be included in a request
         or response, including fields specified explicitly above."""
 
         fields = (
-            'author', 'title', 'slug', 'description', 'body', 'created_at', 
-            'updated_at', 'read_time', 'average_rating', 'likes', 'dislikes', 
+            'author', 'title', 'slug', 'description', 'body', 'created_at',
+            'updated_at', 'read_time', 'average_rating', 'likes', 'dislikes',
             'tags', 'category', 'favorites_count', 'image')
         read_only_fields = ('slug', 'author_id',)
 
+
 class TagSerializer(serializers.ModelSerializer):
-    
+
     class Meta:
         model = Tag
         fields = ('name',)
 
+
 class CategorySerializer(serializers.ModelSerializer):
-    
 
     class Meta:
         model = Category
         fields = ('id', 'title', 'slug')
         read_only_fields = ('id', 'slug',)
 
-        
+
 class RateArticleSerializer(serializers.ModelSerializer):
     rated_by = serializers.ReadOnlyField(source='rated_by.username')
     article = serializers.ReadOnlyField(source='article.slug')
@@ -79,7 +81,6 @@ class LikeArticleSerializer(serializers.ModelSerializer):
         return {
             "likes": likes}
 
-
     def get_favorites_count(self, instance):
         return instance.favorited_by.count()
 
@@ -94,3 +95,21 @@ class ShareEmailSerializer(serializers.Serializer):
             raise serializers.ValidationError(
                 'An email is required to share.'
             )
+class ReportArticleSerializer(serializers.ModelSerializer):
+    article_title = serializers.ReadOnlyField(source='article.title')
+    article_slug = serializers.ReadOnlyField(source='article.slug')
+    article_author = serializers.ReadOnlyField(source='article.author.email')
+    reported_by = serializers.ReadOnlyField(source='user.email')
+
+    class Meta:
+        model = Reported
+        fields = ['article_title', 'reason', 'article_slug',
+                  'article_author', 'reported_by']
+
+class ReportSerializer(ReportArticleSerializer):
+    times_reported = serializers.ReadOnlyField(source='article.times_reported')
+
+    class Meta:
+        model = Reported
+        fields = ['article_title','article_slug',
+                  'article_author','times_reported','reason']

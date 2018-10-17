@@ -27,6 +27,10 @@ class CategoryJSONRenderer(AhJSONRenderer):
     charset = 'utf-8'
     object_label = 'category'
 
+class ReportArticleJSONRenderer(AhJSONRenderer):
+    charset = 'utf-8'
+    object_label = 'support'     
+
 
 class ShareArticleJSONRenderer(AhJSONRenderer):
     charset = 'utf-8'

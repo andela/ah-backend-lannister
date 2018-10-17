@@ -52,6 +52,10 @@ def create_history(sender, **kwargs):
 post_save.connect(create_history, sender=Comment)
 
 class LikeComment(models.Model):
+    """
+    This model is responsble for creating relationship between user 
+    who likes a comment and the comment
+    """
     liked_by = models.ForeignKey(User, blank=False, on_delete=models.CASCADE)
 
     comment = models.ForeignKey(Comment, blank=False, on_delete=models.CASCADE)
