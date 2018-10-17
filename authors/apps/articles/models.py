@@ -15,19 +15,20 @@ from taggit.managers import TaggableManager
 
 
 class Category(models.Model):
-      title = models.CharField(max_length=100, default="general")
-      slug = models.SlugField(max_length=100, unique=True)
+    title = models.CharField(max_length=100, default="general")
+    slug = models.SlugField(max_length=100, unique=True)
 
-      class Meta: 
+    class Meta: 
         verbose_name_plural = "Categories"
 
-      def __str__(self):
-          return self.title
+    def __str__(self):
+        return self.title
 
-      def save(self, *args, **kwargs):
+    def save(self, *args, **kwargs):
         if not self.slug:
             self.slug = get_unique_slug(self, 'title', 'slug')
         return super().save(*args, **kwargs)
+
 
 class Article(models.Model):
     """
@@ -42,6 +43,8 @@ class Article(models.Model):
     description = models.TextField(null=False, blank=False)
 
     body = models.TextField(null=False, blank=False,)
+
+    image = models.URLField(blank=True)
 
     created_at = models.DateTimeField(
         auto_created=True, auto_now=False, default=timezone.now)

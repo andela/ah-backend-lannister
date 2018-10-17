@@ -19,8 +19,10 @@ class ArticleSerializer(TaggitSerializer, serializers.ModelSerializer):
         """ List all of the fields that could possibly be included in a request
         or response, including fields specified explicitly above."""
 
-        fields = ('author', 'title', 'slug', 'description',
-                  'body', 'created_at', 'updated_at', 'read_time', 'average_rating', 'likes', 'dislikes','tags','category','favorites_count')
+        fields = (
+            'author', 'title', 'slug', 'description', 'body', 'created_at', 
+            'updated_at', 'read_time', 'average_rating', 'likes', 'dislikes', 
+            'tags', 'category', 'favorites_count', 'image')
         read_only_fields = ('slug', 'author_id',)
 
 class TagSerializer(serializers.ModelSerializer):
@@ -34,7 +36,7 @@ class CategorySerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Category
-        fields = ('id','title','slug')
+        fields = ('id', 'title', 'slug')
         read_only_fields = ('id', 'slug',)
 
         

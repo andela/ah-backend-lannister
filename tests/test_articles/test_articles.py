@@ -83,6 +83,44 @@ class ArticlesTest(APITestCase,BaseTest):
         self.wrong_article_update,
          format="json")
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+    
+    def test_search(self):
+        self.create_login_user()
+        article = self.client.post(
+            '/api/articles/', self.create_article, format="json")
+        articlestitle = article.data["title"]
+        response = self.client.get('/api/articles/?search={}/'.format(articlestitle), 
+        format="json")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+    
+    def test_filter_author(self):
+        self.create_login_user()
+        article = self.client.post(
+            '/api/articles/', self.create_article, format="json")
+        author = article.data["author"]
+        response = self.client.get('/api/articles/?author={}/'.format(author), 
+        format="json")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+    
+    def test_filter_tags(self):
+        self.create_login_user()
+        article = self.client.post(
+            '/api/articles/', self.create_article, format="json")
+        tag = article.data["tags"]
+        response = self.client.get('/api/articles/?tag={}/'.format(tag), 
+        format="json")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+    
+    def test_filter_title(self):
+        self.create_login_user()
+        article = self.client.post(
+            '/api/articles/', self.create_article, format="json")
+        title = article.data["title"]
+        response = self.client.get('/api/articles/?title={}/'.format(title), 
+        format="json")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+
 
 
 
