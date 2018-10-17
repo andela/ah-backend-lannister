@@ -16,7 +16,8 @@ class Profile(models.Model):
     following = models.BooleanField(default=False)
     number_of_articles = models.IntegerField(default=0)
     favorites = models.ManyToManyField('articles.Article', related_name='favorited_by')
-
+    app_notification_enabled = models.BooleanField(default=True)
+    email_notification_enabled = models.BooleanField(default=True)
 
     def __str__(self):
         return self.user.username
