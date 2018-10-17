@@ -2,7 +2,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from rest_framework import serializers
 
 from authors.apps.articles.models import (Article, Category, LikeArticle,
-                                          RateArticle, Reported)
+                                          RateArticle, Reported, Bookmark)
 from authors.apps.authentication.models import User
 from taggit.models import Tag
 from taggit_serializer.serializers import (TaggitSerializer,
@@ -95,6 +95,8 @@ class ShareEmailSerializer(serializers.Serializer):
             raise serializers.ValidationError(
                 'An email is required to share.'
             )
+
+
 class ReportArticleSerializer(serializers.ModelSerializer):
     article_title = serializers.ReadOnlyField(source='article.title')
     article_slug = serializers.ReadOnlyField(source='article.slug')
@@ -106,10 +108,24 @@ class ReportArticleSerializer(serializers.ModelSerializer):
         fields = ['article_title', 'reason', 'article_slug',
                   'article_author', 'reported_by']
 
+
 class ReportSerializer(ReportArticleSerializer):
     times_reported = serializers.ReadOnlyField(source='article.times_reported')
 
     class Meta:
         model = Reported
-        fields = ['article_title','article_slug',
-                  'article_author','times_reported','reason']
+        fields = ['article_title', 'article_slug',
+                  'article_author', 'times_reported', 'reason']
+
+
+class BookmarkSerializer(serializers.ModelSerializer):
+    author = serializers.ReadOnlyField(source='slug.author.username')
+    slug = serializers.ReadOnlyField(source='slug.slug')
+    image = serializers.ReadOnlyField(source='slug.image')
+    article_title = serializers.ReadOnlyField(source='slug.title')
+    description = serializers.ReadOnlyField(source='slug.title')
+
+    class Meta:
+        model = Bookmark
+        fields = ['author', 'article_title', 'slug',
+                  'description', 'bookmarked_at', 'image']

@@ -131,3 +131,10 @@ class Reported(models.Model):
 
     class Meta:
         ordering = ['-created_at']
+
+        
+class Bookmark(models.Model):
+    user = models.ForeignKey(User, blank=False, on_delete=models.CASCADE)
+    slug = models.ForeignKey(Article,blank=False, on_delete=models.CASCADE, to_field='slug')
+    bookmarked_at = models.DateTimeField(
+        auto_created=True, auto_now=False, default=timezone.now)
