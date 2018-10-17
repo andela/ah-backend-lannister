@@ -4,7 +4,7 @@ from rest_framework import serializers
 from authors.apps.authentication.models import User
 from authors.apps.profiles.models import Profile
 
-from .models import Comment
+from .models import Comment, CommentHistory
 
 
 class CommentSerializer(serializers.ModelSerializer):
@@ -52,3 +52,10 @@ class CommentChildSerializer(serializers.ModelSerializer):
                 'Please insert the body of the comment'
             )
         return data
+
+
+class CommentHistorySerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = CommentHistory
+        fields = ('comment', 'body', 'updated_at')
