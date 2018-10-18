@@ -82,3 +82,15 @@ class LikeArticleSerializer(serializers.ModelSerializer):
 
     def get_favorites_count(self, instance):
         return instance.favorited_by.count()
+
+
+class ShareEmailSerializer(serializers.Serializer):
+    email = serializers.EmailField(max_length=255)
+
+    def check(self, data):
+        email = data.get['email', None]
+
+        if email is None:
+            raise serializers.ValidationError(
+                'An email is required to share.'
+            )

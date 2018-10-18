@@ -22,8 +22,14 @@ class RateUserJSONRenderer(AhJSONRenderer):
     charset = 'utf-8'
     object_label = 'rate'
 
+
 class CategoryJSONRenderer(AhJSONRenderer):
     charset = 'utf-8'
     object_label = 'category'
+
+
+class ShareArticleJSONRenderer(AhJSONRenderer):
+    charset = 'utf-8'
+    object_label = 'share'
 
 
