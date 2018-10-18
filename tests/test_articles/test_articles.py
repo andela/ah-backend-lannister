@@ -119,6 +119,25 @@ class ArticlesTest(APITestCase,BaseTest):
         response = self.client.get('/api/articles/?title={}/'.format(title), 
         format="json")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+    
+    def test_share_article(self):
+        self.create_login_user()
+        article = self.client.post('/api/articles/',self.create_article, 
+        format="json")
+        articleslug = article.data["slug"]
+        response = self.client.post('/api/articles/{}/share/'.format(articleslug), 
+        self.share_article, format="json")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+    
+    def test_share_wrong_article_slug(self):
+        self.create_login_user()
+        article = self.client.post('/api/articles/',self.create_article, 
+        format="json")
+        articleslug = "j"
+        response = self.client.post('/api/articles/{}/share/'.format(articleslug), 
+        self.share_article, format="json")
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
 
 
 

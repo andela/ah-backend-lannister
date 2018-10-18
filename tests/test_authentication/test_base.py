@@ -152,3 +152,8 @@ class BaseTest:
                 "likes": True,
             }
         }
+        self.share_article = {
+            "share": {
+                "email": self.email
+            }
+        }

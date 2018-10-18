@@ -1,17 +1,14 @@
-from authors.apps.authentication.models import User
 from django.conf import settings
 from django.contrib.postgres.fields import ArrayField
 from django.db import models
 from django.db.models import Avg, Count
 from django.utils import timezone
 from django.utils.text import slugify
-
-from .utils import get_unique_slug, time
-
-from django.contrib.postgres.fields import ArrayField
-from authors.apps.authentication.models import User
-from .utils import get_unique_slug, time
 from taggit.managers import TaggableManager
+
+from authors.apps.authentication.models import User
+
+from .utils import get_unique_slug, time
 
 
 class Category(models.Model):

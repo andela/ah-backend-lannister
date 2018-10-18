@@ -1,28 +1,27 @@
-import json
-
-from authors.apps.articles.renderers import ArticleJSONRenderer
-from authors.apps.articles.serializers import ArticleSerializer, TagSerializer
 from django.core.exceptions import ObjectDoesNotExist
-from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
+from django.core.mail import EmailMessage
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, render
-from rest_framework import generics, serializers, status
+from rest_framework import filters, generics, serializers, status
 from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.generics import ListCreateAPIView
 from rest_framework.permissions import (AllowAny, IsAuthenticated,
                                         IsAuthenticatedOrReadOnly)
 from rest_framework.response import Response
-from django.http import JsonResponse
+from rest_framework.views import APIView
 from taggit.models import Tag
 
-from .exceptions import TagHasNoArticles, CatHasNoArticles
-from .models import Article, LikeArticle, RateArticle, Category
-from rest_framework import filters
-from .exceptions import TagHasNoArticles
-from .renderers import (ArticleJSONRenderer, LikeUserJSONRenderer,
-                        RateUserJSONRenderer, TagJSONRenderer, CategoryJSONRenderer)
-from .serializers import (ArticleSerializer, LikeArticleSerializer,
-                          RateArticleSerializer, CategorySerializer)
+from authors.apps.articles.renderers import ArticleJSONRenderer
+from authors.apps.articles.serializers import ArticleSerializer, TagSerializer
+
+from .exceptions import CatHasNoArticles, TagHasNoArticles
+from .models import Article, Category, LikeArticle, RateArticle
+from .renderers import (ArticleJSONRenderer, CategoryJSONRenderer,
+                        LikeUserJSONRenderer, RateUserJSONRenderer,
+                        ShareArticleJSONRenderer, TagJSONRenderer)
+from .serializers import (ArticleSerializer, CategorySerializer,
+                          LikeArticleSerializer, RateArticleSerializer,
+                          ShareEmailSerializer)
 
 
 class TagListAPIView(generics.ListAPIView):
@@ -263,3 +262,36 @@ class UnFavoriteArticleView(generics.DestroyAPIView):
         serializer = self.serializer_class(article)
 
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class ShareArticleAPIView(generics.CreateAPIView):
+    permission_classes = (IsAuthenticated,)
+    renderer_classes = (ShareArticleJSONRenderer,)
+    serializer_class = ShareEmailSerializer
+
+    def create(self, request, *args, **kwargs):
+            article_slug = self.kwargs['slug']
+            article = get_object_or_404(Article, slug=article_slug)
+            share = request.data.get('share', {})
+            serializer = self.serializer_class(data=share)
+            serializer.is_valid(raise_exception=True)
+            share_data = serializer.data
+            self.shareArticleMail(
+                share, request, share_data, article)
+            return Response(share_data, status=status.HTTP_200_OK)
+
+    def shareArticleMail(self, share, request, share_data, article):
+        user_instance = self.request.user
+        host = request.get_host()
+        user = user_instance.username
+        subject = article.title
+        share_slug = article.slug
+        body = 'Click on the link below to view Article! \n\n \
+                {}/api/articles/{}/ \n\n shared by [ {} ]'.format(
+                    host, share_slug, user)
+        to_email = [share['email']]
+        email = EmailMessage(subject, body, to=to_email,)
+        email.send()
+        share_data.update({
+            'message': 'Article shared succesfully'
+                    })
