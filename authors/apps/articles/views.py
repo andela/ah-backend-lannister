@@ -12,7 +12,7 @@ from rest_framework.response import Response
 
 from taggit.models import Tag
 from django.core.mail import EmailMessage
-
+from rest_framework import generics, serializers, status
 from .exceptions import CatHasNoArticles, TagHasNoArticles
 from .models import (Article, Bookmark, Category, LikeArticle, RateArticle,
                      Reported)
@@ -120,35 +120,6 @@ class ArticleAPIView(generics.ListCreateAPIView):
         return queryset
 
 
-class ArticleAPIDetailsView(generics.RetrieveUpdateDestroyAPIView):
-    """retreive, update and delete an article """
-    permission_classes = (IsAuthenticatedOrReadOnly,)
-    renderer_classes = (ArticleJSONRenderer,)
-    serializer_class = ArticleSerializer
-    lookup_field = "slug"
-    queryset = Article.objects.all()
-
-    def destroy(self, request, *args, **kwargs):
-        instance = self.get_object()
-        if instance.author != request.user:
-            raise PermissionDenied
-        self.perform_destroy(instance)
-        return Response({"message": "article deleted"},
-                        status=status.HTTP_200_OK)
-
-    def update(self, request, *args, **kwargs):
-        article_dict = request.data.get("article", {})
-        partial = kwargs.pop('partial', False)
-        instance = self.get_object()
-        if instance.author != request.user:
-            raise PermissionDenied
-        serializer = self.get_serializer(
-            instance, data=article_dict, partial=partial)
-        serializer.is_valid(raise_exception=True)
-        self.perform_update(serializer)
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
-
-
 class ArticleDraftAPIView(generics.ListAPIView):
     """create an article, list all draft articles paginated to 5 per page"""
     permission_classes = (IsAuthenticated,)
@@ -186,8 +157,8 @@ class ArticlePublishedAPIView(generics.ListAPIView):
     
     def list(self, request, *args, **kwargs):
         return ArticleDraftAPIView.list(self, request, *args, **kwargs)
-       
-
+    
+        
 class ArticleAPIPublishView(generics.UpdateAPIView):
     permission_classes = (IsAuthenticated,)
     renderer_classes = (ArticleJSONRenderer,)
@@ -207,6 +178,35 @@ class ArticleAPIPublishView(generics.UpdateAPIView):
         )
 
 
+class ArticleAPIDetailsView(generics.RetrieveUpdateDestroyAPIView):
+    """retreive, update and delete an article """
+    permission_classes = (IsAuthenticatedOrReadOnly,)
+    renderer_classes = (ArticleJSONRenderer,)
+    serializer_class = ArticleSerializer
+    lookup_field = "slug"
+    queryset = Article.objects.all()
+
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        if instance.author != request.user:
+            raise PermissionDenied
+        self.perform_destroy(instance)
+        return Response({"message": "article deleted"},
+                        status=status.HTTP_200_OK)
+
+    def update(self, request, *args, **kwargs):
+        article_dict = request.data.get("article", {})
+        partial = kwargs.pop('partial', False)
+        instance = self.get_object()
+        if instance.author != request.user:
+            raise PermissionDenied
+        serializer = self.get_serializer(
+            instance, data=article_dict, partial=partial)
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+        
 class RateArticleView(ListCreateAPIView):
     permission_classes = (IsAuthenticated,)
     renderer_classes = (RateUserJSONRenderer,)

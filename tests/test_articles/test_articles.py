@@ -123,7 +123,7 @@ class ArticlesTest(APITestCase, BaseTest):
     
     def test_share_article(self):
         self.create_login_user()
-        article = self.client.post('/api/articles/',self.create_article, 
+        article = self.client.post('/api/articles/', self.create_article, 
         format="json")
         articleslug = article.data["slug"]
         response = self.client.post('/api/articles/{}/share/'.format(articleslug), 
@@ -132,12 +132,35 @@ class ArticlesTest(APITestCase, BaseTest):
     
     def test_share_wrong_article_slug(self):
         self.create_login_user()
-        article = self.client.post('/api/articles/',self.create_article, 
+        article = self.client.post('/api/articles/', self.create_article, 
         format="json")
         articleslug = "j"
         response = self.client.post('/api/articles/{}/share/'.format(articleslug), 
         self.share_article, format="json")
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+    
+    def test_publish_article(self):
+        self.create_login_user()
+        article = self.client.post('/api/articles/', self.create_article, 
+        format="json")
+        articleslug = article.data["slug"]
+        response = self.client.put('/api/articles/{}/publish/'.format(articleslug), 
+        format="json")
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+    def test_get_my_published_articles(self):
+        self.create_login_user()
+        article = self.client.post('/api/articles/', self.create_article, 
+        format="json")
+        response = self.client.get('/api/me/articles/published/', format="json")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+    
+    def test_get_my_draft_articles(self):
+        self.create_login_user()
+        article = self.client.post('/api/articles/', self.create_article, 
+        format="json")
+        response = self.client.get('/api/me/articles/drafts/', format="json")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
 
 
     def test_report_an_article(self):

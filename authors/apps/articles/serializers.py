@@ -15,7 +15,6 @@ class ArticleSerializer(TaggitSerializer, serializers.ModelSerializer):
     read_time = serializers.ReadOnlyField(source='read')
     tags = TagListSerializerField()
     is_published = serializers.ReadOnlyField()
-
     class Meta:
         model = Article
         """ List all of the fields that could possibly be included in a request
@@ -37,7 +36,6 @@ class TagSerializer(serializers.ModelSerializer):
 
 
 class CategorySerializer(serializers.ModelSerializer):
-
     class Meta:
         model = Category
         fields = ('id', 'title', 'slug')
