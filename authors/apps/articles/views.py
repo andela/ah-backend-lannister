@@ -1,3 +1,5 @@
+import json
+
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
@@ -11,15 +13,17 @@ from rest_framework.response import Response
 from taggit.models import Tag
 
 from .exceptions import CatHasNoArticles, TagHasNoArticles
-from .models import Article, Category, LikeArticle, RateArticle, Reported
-from .renderers import (ArticleJSONRenderer, CategoryJSONRenderer,
-                        LikeUserJSONRenderer, RateUserJSONRenderer,
-                        ReportArticleJSONRenderer, ShareArticleJSONRenderer,
-                        TagJSONRenderer)
-from .serializers import (ArticleSerializer, CategorySerializer,
-                          LikeArticleSerializer, RateArticleSerializer,
-                          ReportArticleSerializer, ReportSerializer,
-                          ShareEmailSerializer, TagSerializer)
+from .models import (Article, Bookmark, Category, LikeArticle, RateArticle,
+                     Reported)
+from .renderers import (ArticleJSONRenderer, BookmarkJSONRenderer,
+                        CategoryJSONRenderer, LikeUserJSONRenderer,
+                        RateUserJSONRenderer, ReportArticleJSONRenderer,
+                        ShareArticleJSONRenderer, TagJSONRenderer)
+from .serializers import (ArticleSerializer, BookmarkSerializer,
+                          CategorySerializer, LikeArticleSerializer,
+                          RateArticleSerializer, ReportArticleSerializer,
+                          ReportSerializer, ShareEmailSerializer,
+                          TagSerializer)
 from .utils import shareArticleMail
 
 
@@ -320,3 +324,55 @@ class ReportArticleListView(generics.ListAPIView):
 class ReportView(ReportArticleListView):
     queryset = Reported.objects.order_by('article_id').distinct('article_id')
     serializer_class = ReportSerializer
+
+
+class BookmarkView(generics.CreateAPIView):
+    permission_classes = (IsAuthenticated,)
+    serializer_class = BookmarkSerializer
+    renderer_classes = (BookmarkJSONRenderer,)
+    queryset = Bookmark.objects.all()
+
+    def create(self, request, *args, **kwargs):
+        slug = get_object_or_404(Article, slug=self.kwargs['slug'])
+        serializer = self.serializer_class(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        instance = Bookmark.objects.filter(
+            slug_id=slug.slug, user_id=request.user.id).first()
+        if instance:
+            return Response({"message": "you have already bookmarked this article"},
+                            status=status.HTTP_200_OK)
+
+        self.perform_create(serializer, slug)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+    def perform_create(self, serializer, slug):
+        serializer.save(user=self.request.user, slug=slug)
+
+
+class UnBookmarkView(generics.DestroyAPIView):
+    permission_classes = (IsAuthenticated,)
+    serializer_class = BookmarkSerializer
+    lookup_field = 'slug'
+    queryset = Bookmark.objects.all()
+
+    def destroy(self, request, *args, **kwargs):
+        instance = Bookmark.objects.filter(
+            user_id=request.user.id, slug_id=self.kwargs['slug']).first()
+        if not instance:
+            return Response({"message": "bookmark not found"})
+        self.perform_destroy(instance)
+        return Response({"message": "deleted"},
+                        status=status.HTTP_200_OK)
+
+
+class AllBookmarksView(generics.ListAPIView):
+    serializer_class = BookmarkSerializer
+    permission_classes = (IsAuthenticated,)
+    renderer_classes = (BookmarkJSONRenderer,)
+    queryset = Bookmark.objects.all()
+
+    def get(self, request, *args, **kwargs):
+        bookmarks = self.queryset.filter(
+            user_id=request.user)
+        serializer = self.serializer_class(bookmarks, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
