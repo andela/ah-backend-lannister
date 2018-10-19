@@ -1,8 +1,11 @@
-from django.utils.text import slugify
-import re
 import datetime
 import math
- 
+import re
+
+from django.core.mail import EmailMessage
+from django.utils.text import slugify
+
+
 def get_unique_slug(model_instance, slugable_field_name, slug_field_name):
     """
     Takes a model instance, sluggable field name (such as 'title') of that
@@ -34,3 +37,19 @@ def time(string, image=0):
         for image in range(image):
             readtime += image_time
         return str(datetime.timedelta(seconds=readtime))
+
+def shareArticleMail(share, request, share_data, article):
+        user_instance = request.user
+        host = request.get_host()
+        user = user_instance.username
+        subject = article.title
+        share_slug = article.slug
+        body = 'Click on the link below to view Article! \n\n \
+                {}/api/articles/{}/ \n\n shared by [ {} ]'.format(
+                    host, share_slug, user)
+        to_email = [share['email']]
+        email = EmailMessage(subject, body, to=to_email,)
+        email.send()
+        share_data.update({
+            'message': 'Article shared succesfully'
+                    })

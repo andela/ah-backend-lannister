@@ -1,11 +1,11 @@
 from django.urls import path
 
-from .views import (
-    ArticleAPIView, ArticleAPIDetailsView, 
-    RateArticleView, LikeArticleView, LikeAPIDetailsView,
-    TagListAPIView, TagRetrieveAPIView, CategoryListCreateAPIView,
-    CategoryRetrieveAPIView, FavoriteArticleView, UnFavoriteArticleView,
-    ShareArticleAPIView,)
+from .views import (ArticleAPIDetailsView, ArticleAPIView,
+                    CategoryListCreateAPIView, CategoryRetrieveAPIView,
+                    FavoriteArticleView, LikeAPIDetailsView, LikeArticleView,
+                    RateArticleView, ReportArticle, ReportArticleListView,
+                    ReportView, ShareArticleAPIView, TagListAPIView,
+                    TagRetrieveAPIView, UnFavoriteArticleView)
 
 app_name = "articles"
 
@@ -24,8 +24,14 @@ urlpatterns = [
     path("tags/<str:tag_name>/", TagRetrieveAPIView.as_view()),
     path("categories/", CategoryListCreateAPIView.as_view()),
     path("categories/<str:cat_name>/", CategoryRetrieveAPIView.as_view()),
-    path('articles/<str:slug>/favorite/', FavoriteArticleView.as_view(), name="favorite"),
-    path('articles/<str:slug>/unfavorite/', UnFavoriteArticleView.as_view(), name="unfavorite")
+    path('articles/<str:slug>/favorite/',
+         FavoriteArticleView.as_view(), name="favorite"),
+    path('articles/<str:slug>/unfavorite/',
+         UnFavoriteArticleView.as_view(), name="unfavorite"),
+    path('articles/<str:slug>/report/', ReportArticle.as_view(), name="escalate"),
+    path('escalations/', ReportArticleListView.as_view(), name="escalated"),
+    path('escalations/report/', ReportView.as_view(), name="escalatation report")
+
 
 
 ]

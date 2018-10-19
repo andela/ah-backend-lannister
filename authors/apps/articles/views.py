@@ -1,27 +1,26 @@
 from django.core.exceptions import ObjectDoesNotExist
-from django.core.mail import EmailMessage
 from django.http import JsonResponse
-from django.shortcuts import get_object_or_404, render
-from rest_framework import filters, generics, serializers, status
+from django.shortcuts import get_object_or_404
+from rest_framework import filters, generics, status
 from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.generics import ListCreateAPIView
-from rest_framework.permissions import (AllowAny, IsAuthenticated,
+from rest_framework.permissions import (AllowAny, IsAdminUser, IsAuthenticated,
                                         IsAuthenticatedOrReadOnly)
 from rest_framework.response import Response
-from rest_framework.views import APIView
+
 from taggit.models import Tag
 
-from authors.apps.articles.renderers import ArticleJSONRenderer
-from authors.apps.articles.serializers import ArticleSerializer, TagSerializer
-
 from .exceptions import CatHasNoArticles, TagHasNoArticles
-from .models import Article, Category, LikeArticle, RateArticle
+from .models import Article, Category, LikeArticle, RateArticle, Reported
 from .renderers import (ArticleJSONRenderer, CategoryJSONRenderer,
                         LikeUserJSONRenderer, RateUserJSONRenderer,
-                        ShareArticleJSONRenderer, TagJSONRenderer)
+                        ReportArticleJSONRenderer, ShareArticleJSONRenderer,
+                        TagJSONRenderer)
 from .serializers import (ArticleSerializer, CategorySerializer,
                           LikeArticleSerializer, RateArticleSerializer,
-                          ShareEmailSerializer)
+                          ReportArticleSerializer, ReportSerializer,
+                          ShareEmailSerializer, TagSerializer)
+from .utils import shareArticleMail
 
 
 class TagListAPIView(generics.ListAPIView):
@@ -41,7 +40,8 @@ class TagRetrieveAPIView(generics.RetrieveAPIView):
         tag_name = self.kwargs["tag_name"]
         tags = Article.objects.filter(tags__name__in=[tag_name]).values()
         if tags:
-            return JsonResponse({'articles': list(tags)}, status=status.HTTP_200_OK)
+            return JsonResponse({'articles': list(tags)},
+                                status=status.HTTP_200_OK)
         else:
             raise TagHasNoArticles("This tag currently has no articles")
 
@@ -86,7 +86,7 @@ class ArticleAPIView(generics.ListCreateAPIView):
     serializer_class = ArticleSerializer
     filter_backends = (filters.SearchFilter,)
     search_fields = (
-    'title', 'author__username', 'description', 'body', 'tags__name',)
+        'title', 'author__username', 'description', 'body', 'tags__name',)
 
     def create(self, request, *args, **kwargs):
         article = request.data.get("article", {})
@@ -110,7 +110,7 @@ class ArticleAPIView(generics.ListCreateAPIView):
             queryset = queryset.filter(author__username=author)
         title = self.request.query_params.get('title', None)
         if title is not None:
-            queryset = queryset.filter(title__icontains=title) 
+            queryset = queryset.filter(title__icontains=title)
         return queryset
 
 
@@ -127,8 +127,8 @@ class ArticleAPIDetailsView(generics.RetrieveUpdateDestroyAPIView):
         if instance.author != request.user:
             raise PermissionDenied
         self.perform_destroy(instance)
-        return Response({"message": "article deleted"}, 
-        status=status.HTTP_200_OK)
+        return Response({"message": "article deleted"},
+                        status=status.HTTP_200_OK)
 
     def update(self, request, *args, **kwargs):
         article_dict = request.data.get("article", {})
@@ -178,7 +178,8 @@ class LikeArticleView(ListCreateAPIView):
         instance = LikeArticle.objects.filter(
             article_id=article_slug.id, liked_by_id=request.user.id).first()
         if instance:
-            return Response({"msg": "you can only like an article once"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"msg": "you can only like an article once"},
+                            status=status.HTTP_400_BAD_REQUEST)
 
         liking = request.data.get('like', {})
         serializer = self.serializer_class(data=liking)
@@ -220,12 +221,17 @@ class FavoriteArticleView(generics.CreateAPIView):
         try:
             article = Article.objects.get(slug=self.kwargs['slug'])
             if article.author_id == profile.user_id:
-                return Response({'error': 'You cannot favorite your own article'}, status=status.HTTP_400_BAD_REQUEST)
+                return Response(
+                    {'error': 'You cannot favorite your own article'},
+                    status=status.HTTP_400_BAD_REQUEST)
             if profile.has_favorited(article):
-                return Response({'error': 'You already favorited this article'}, status=status.HTTP_400_BAD_REQUEST)
+                return Response(
+                    {'error': 'You already favorited this article'},
+                    status=status.HTTP_400_BAD_REQUEST)
         except Article.DoesNotExist:
-            return Response({'message': 'An article with this slug was not found.'},
-                            status=status.HTTP_404_NOT_FOUND)
+            return Response(
+                {'message': 'An article with this slug was not found.'},
+                status=status.HTTP_404_NOT_FOUND)
 
         profile.favorite(article)
         article.favorites_count += 1
@@ -246,12 +252,13 @@ class UnFavoriteArticleView(generics.DestroyAPIView):
         try:
             article = Article.objects.get(slug=self.kwargs['slug'])
         except Article.DoesNotExist:
-            return Response({'message': 'An article with this slug was not found.'},
-                            status=status.HTTP_404_NOT_FOUND)
-
+            return Response(
+                {'message': 'An article with this slug was not found.'},
+                status=status.HTTP_404_NOT_FOUND)
         if not profile.has_favorited(article):
-            return Response({'message': 'This article is not among your favorites'},
-                            status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {'message': 'This article is not among your favorites'},
+                status=status.HTTP_400_BAD_REQUEST)
 
         profile.unfavorite(article)
         if article.favorites_count > 0:
@@ -270,28 +277,46 @@ class ShareArticleAPIView(generics.CreateAPIView):
     serializer_class = ShareEmailSerializer
 
     def create(self, request, *args, **kwargs):
-            article_slug = self.kwargs['slug']
-            article = get_object_or_404(Article, slug=article_slug)
-            share = request.data.get('share', {})
-            serializer = self.serializer_class(data=share)
-            serializer.is_valid(raise_exception=True)
-            share_data = serializer.data
-            self.shareArticleMail(
-                share, request, share_data, article)
-            return Response(share_data, status=status.HTTP_200_OK)
+        article_slug = self.kwargs['slug']
+        article = get_object_or_404(Article, slug=article_slug)
+        share = request.data.get('share', {})
+        serializer = self.serializer_class(data=share)
+        serializer.is_valid(raise_exception=True)
+        share_data = serializer.data
+        shareArticleMail(share, request, share_data, article)
+        return Response(share_data, status=status.HTTP_200_OK)
 
-    def shareArticleMail(self, share, request, share_data, article):
-        user_instance = self.request.user
-        host = request.get_host()
-        user = user_instance.username
-        subject = article.title
-        share_slug = article.slug
-        body = 'Click on the link below to view Article! \n\n \
-                {}/api/articles/{}/ \n\n shared by [ {} ]'.format(
-                    host, share_slug, user)
-        to_email = [share['email']]
-        email = EmailMessage(subject, body, to=to_email,)
-        email.send()
-        share_data.update({
-            'message': 'Article shared succesfully'
-                    })
+
+class ReportArticle(generics.CreateAPIView):
+    permission_classes = (IsAuthenticated,)
+    serializer_class = ReportArticleSerializer
+    renderer_classes = (ReportArticleJSONRenderer,)
+    lookup_field = "slug"
+    queryset = Article.objects.all()
+
+    def post(self, request, *args, **kwargs):
+        report_data = request.data.get('report', {})
+        article = get_object_or_404(Article, slug=kwargs['slug'])
+        if article.author_id == request.user.id:
+            raise PermissionDenied("you cant report your article")
+        if Reported.objects.filter(article=article, user=request.user):
+            raise PermissionDenied("you can only report once")
+        serializer = self.serializer_class(data=report_data)
+        serializer.is_valid(raise_exception=True)
+        article.times_reported += 1
+        article.save()
+        serializer.save(article=article, user=request.user)
+        msg = {'message': 'The article has been reported to the site admin'}
+        return Response(msg, status=status.HTTP_201_CREATED)
+
+
+class ReportArticleListView(generics.ListAPIView):
+    permission_classes = (IsAdminUser,)
+    renderer_classes = (ReportArticleJSONRenderer,)
+    serializer_class = ReportArticleSerializer
+    queryset = Reported.objects.all()
+
+
+class ReportView(ReportArticleListView):
+    queryset = Reported.objects.order_by('article_id').distinct('article_id')
+    serializer_class = ReportSerializer

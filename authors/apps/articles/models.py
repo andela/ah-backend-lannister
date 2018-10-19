@@ -4,9 +4,10 @@ from django.db import models
 from django.db.models import Avg, Count
 from django.utils import timezone
 from django.utils.text import slugify
-from taggit.managers import TaggableManager
 
 from authors.apps.authentication.models import User
+from authors.apps.profiles.models import Profile
+from taggit.managers import TaggableManager
 
 from .utils import get_unique_slug, time
 
@@ -15,7 +16,7 @@ class Category(models.Model):
     title = models.CharField(max_length=100, default="general")
     slug = models.SlugField(max_length=100, unique=True)
 
-    class Meta: 
+    class Meta:
         verbose_name_plural = "Categories"
 
     def __str__(self):
@@ -57,8 +58,9 @@ class Article(models.Model):
 
     tags = TaggableManager()
 
-    category = models.ForeignKey(Category, 
+    category = models.ForeignKey(Category,
                                  on_delete=models.CASCADE)
+    times_reported = models.IntegerField(default=0)
 
     def __str__(self):
         """
@@ -116,3 +118,16 @@ class LikeArticle(models.Model):
     article = models.ForeignKey(Article, blank=False, on_delete=models.CASCADE)
 
     likes = models.NullBooleanField()
+
+
+class Reported(models.Model):
+    article = models.ForeignKey(
+        Article, blank=False, on_delete=models.CASCADE, to_field='slug')
+    user = models.ForeignKey(
+        User, blank=False, on_delete=models.CASCADE, to_field='email')
+    reason = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+
+    class Meta:
+        ordering = ['-created_at']
