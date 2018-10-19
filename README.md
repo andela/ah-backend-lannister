@@ -10,7 +10,10 @@ Create a community of like minded authors to foster inspiration and innovation
 by leveraging the modern web.
 
 ---
-
+## Documentation
+This API has been documented using both [Swagger](https://swagger.io/) and [CoreApi](http://www.coreapi.org/)
+- Swagger [documentation](https://ah-backend-lannister-staging.herokuapp.com/swagger-docs/)
+- CoreApi [documentation](https://ah-backend-lannister-staging.herokuapp.com/coreapi-docs/)
 ## API Spec
 The preferred JSON object to be returned by the API should be structured as follows:
 
