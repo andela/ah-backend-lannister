@@ -1,16 +1,22 @@
 from django.urls import path
 
-from .views import (ArticleAPIDetailsView, ArticleAPIView,
-                    CategoryListCreateAPIView, CategoryRetrieveAPIView,
-                    FavoriteArticleView, LikeAPIDetailsView, LikeArticleView,
-                    RateArticleView, ReportArticle, ReportArticleListView,
-                    ReportView, ShareArticleAPIView, TagListAPIView,
-                    TagRetrieveAPIView, UnFavoriteArticleView)
+from .views import (AllBookmarksView, ArticleAPIDetailsView, ArticleAPIView,
+                    BookmarkView, CategoryListCreateAPIView,
+                    CategoryRetrieveAPIView, FavoriteArticleView,
+                    LikeAPIDetailsView, LikeArticleView, RateArticleView,
+                    ReportArticle, ReportArticleListView, ReportView,
+                    ShareArticleAPIView, TagListAPIView, TagRetrieveAPIView,
+                    UnBookmarkView, UnFavoriteArticleView, ArticleDraftAPIView,
+                    ArticleAPIPublishView, ArticlePublishedAPIView)
 
 app_name = "articles"
 
 urlpatterns = [
     path("articles/", ArticleAPIView.as_view()),
+    path("me/articles/drafts/", ArticleDraftAPIView.as_view()),
+    path("me/articles/published/", ArticlePublishedAPIView.as_view()),
+    path('articles/<str:slug>/publish/', ArticleAPIPublishView.as_view(),
+         name='publish_article'),
     path('articles/<str:slug>/', ArticleAPIDetailsView.as_view(),
          name='retrieveUpdateDelete'),
     path('articles/<str:slug>/rating/', RateArticleView.as_view()),
@@ -30,8 +36,14 @@ urlpatterns = [
          UnFavoriteArticleView.as_view(), name="unfavorite"),
     path('articles/<str:slug>/report/', ReportArticle.as_view(), name="escalate"),
     path('escalations/', ReportArticleListView.as_view(), name="escalated"),
-    path('escalations/report/', ReportView.as_view(), name="escalatation report")
+    path('escalations/report/', ReportView.as_view(), name="escalatation report"),
 
 
+    path('articles/<str:slug>/bookmark/', BookmarkView.as_view(),
+         name='bookmark_articles'),
+    path('articles/<str:slug>/unbookmark/', UnBookmarkView.as_view(),
+         name='unbookmark_articles'),
+    path('bookmarks/', AllBookmarksView.as_view(),
+         name='bookmarks'),
 
 ]

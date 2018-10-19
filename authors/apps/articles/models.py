@@ -62,6 +62,11 @@ class Article(models.Model):
                                  on_delete=models.CASCADE)
     times_reported = models.IntegerField(default=0)
 
+    is_published = models.BooleanField(default=False)
+
+    published_on = models.DateTimeField(
+        auto_created=True, auto_now=False, default=timezone.now)
+
     def __str__(self):
         """
         Returns a string representation of this `Article`.
@@ -131,3 +136,10 @@ class Reported(models.Model):
 
     class Meta:
         ordering = ['-created_at']
+
+        
+class Bookmark(models.Model):
+    user = models.ForeignKey(User, blank=False, on_delete=models.CASCADE)
+    slug = models.ForeignKey(Article,blank=False, on_delete=models.CASCADE, to_field='slug')
+    bookmarked_at = models.DateTimeField(
+        auto_created=True, auto_now=False, default=timezone.now)

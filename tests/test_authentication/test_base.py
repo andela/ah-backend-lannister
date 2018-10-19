@@ -157,7 +157,7 @@ class BaseTest:
                 "email": self.email
             }
         }
-        self.report_data={
+        self.report_data = {
             "report": {
                 "reason": "plagiarism"
             }

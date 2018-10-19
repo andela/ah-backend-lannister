@@ -1,3 +1,5 @@
+import json
+
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
@@ -9,18 +11,22 @@ from rest_framework.permissions import (AllowAny, IsAdminUser, IsAuthenticated,
 from rest_framework.response import Response
 
 from taggit.models import Tag
+from django.core.mail import EmailMessage
 
 from .exceptions import CatHasNoArticles, TagHasNoArticles
-from .models import Article, Category, LikeArticle, RateArticle, Reported
-from .renderers import (ArticleJSONRenderer, CategoryJSONRenderer,
-                        LikeUserJSONRenderer, RateUserJSONRenderer,
-                        ReportArticleJSONRenderer, ShareArticleJSONRenderer,
-                        TagJSONRenderer)
-from .serializers import (ArticleSerializer, CategorySerializer,
-                          LikeArticleSerializer, RateArticleSerializer,
-                          ReportArticleSerializer, ReportSerializer,
-                          ShareEmailSerializer, TagSerializer)
+from .models import (Article, Bookmark, Category, LikeArticle, RateArticle,
+                     Reported)
+from .renderers import (ArticleJSONRenderer, BookmarkJSONRenderer,
+                        CategoryJSONRenderer, LikeUserJSONRenderer,
+                        RateUserJSONRenderer, ReportArticleJSONRenderer,
+                        ShareArticleJSONRenderer, TagJSONRenderer)
+from .serializers import (ArticleSerializer, BookmarkSerializer,
+                          CategorySerializer, LikeArticleSerializer,
+                          RateArticleSerializer, ReportArticleSerializer,
+                          ReportSerializer, ShareEmailSerializer,
+                          TagSerializer)
 from .utils import shareArticleMail
+from rest_framework.views import APIView
 
 
 class TagListAPIView(generics.ListAPIView):
@@ -80,7 +86,7 @@ class CategoryRetrieveAPIView(generics.RetrieveAPIView):
 
 class ArticleAPIView(generics.ListCreateAPIView):
     """create an article, list all articles paginated to 5 per page"""
-    queryset = Article.objects.all()
+    queryset = Article.objects.filter(is_published=True)
     permission_classes = (IsAuthenticatedOrReadOnly,)
     renderer_classes = (ArticleJSONRenderer,)
     serializer_class = ArticleSerializer
@@ -141,6 +147,64 @@ class ArticleAPIDetailsView(generics.RetrieveUpdateDestroyAPIView):
         serializer.is_valid(raise_exception=True)
         self.perform_update(serializer)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+
+class ArticleDraftAPIView(generics.ListAPIView):
+    """create an article, list all draft articles paginated to 5 per page"""
+    permission_classes = (IsAuthenticated,)
+    renderer_classes = (ArticleJSONRenderer,)
+    serializer_class = ArticleSerializer
+
+    def get_queryset(self):
+        auth_user = self.request.user
+        queryset = Article.objects.filter(
+            author_id=auth_user.id, is_published=False)
+        return queryset
+    
+    def list(self, request, *args, **kwargs):
+
+        queryset = self.filter_queryset(self.get_queryset())
+        if queryset.count() == 0:
+            return Response({"msg": "you have no articles"})
+        else:
+            page = self.paginate_queryset(queryset)
+            if page is not None:
+                serializer = self.get_serializer(page, many=True)
+                return self.get_paginated_response(serializer.data)
+        
+
+class ArticlePublishedAPIView(generics.ListAPIView):
+    permission_classes = (IsAuthenticated,)
+    renderer_classes = (ArticleJSONRenderer,)
+    serializer_class = ArticleSerializer
+
+    def get_queryset(self):
+        auth_user = self.request.user
+        queryset = Article.objects.filter(
+            author_id=auth_user.id, is_published=True)
+        return queryset
+    
+    def list(self, request, *args, **kwargs):
+        return ArticleDraftAPIView.list(self, request, *args, **kwargs)
+       
+
+class ArticleAPIPublishView(generics.UpdateAPIView):
+    permission_classes = (IsAuthenticated,)
+    renderer_classes = (ArticleJSONRenderer,)
+    serializer_class = ArticleSerializer
+
+    def update(self, request, *args, **kwargs):
+        article = get_object_or_404(
+                Article, slug=self.kwargs['slug'], author_id=request.user.id)
+        
+        if not article.is_published:
+            article.is_published = True
+            article.save()
+            return Response(
+                {"message": "article published succesfully"}, status=status.HTTP_201_CREATED)
+        raise serializers.ValidationError(
+            'article already published'
+        )
 
 
 class RateArticleView(ListCreateAPIView):
@@ -320,3 +384,55 @@ class ReportArticleListView(generics.ListAPIView):
 class ReportView(ReportArticleListView):
     queryset = Reported.objects.order_by('article_id').distinct('article_id')
     serializer_class = ReportSerializer
+
+
+class BookmarkView(generics.CreateAPIView):
+    permission_classes = (IsAuthenticated,)
+    serializer_class = BookmarkSerializer
+    renderer_classes = (BookmarkJSONRenderer,)
+    queryset = Bookmark.objects.all()
+
+    def create(self, request, *args, **kwargs):
+        slug = get_object_or_404(Article, slug=self.kwargs['slug'])
+        serializer = self.serializer_class(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        instance = Bookmark.objects.filter(
+            slug_id=slug.slug, user_id=request.user.id).first()
+        if instance:
+            return Response({"message": "you have already bookmarked this article"},
+                            status=status.HTTP_200_OK)
+
+        self.perform_create(serializer, slug)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+    def perform_create(self, serializer, slug):
+        serializer.save(user=self.request.user, slug=slug)
+
+
+class UnBookmarkView(generics.DestroyAPIView):
+    permission_classes = (IsAuthenticated,)
+    serializer_class = BookmarkSerializer
+    lookup_field = 'slug'
+    queryset = Bookmark.objects.all()
+
+    def destroy(self, request, *args, **kwargs):
+        instance = Bookmark.objects.filter(
+            user_id=request.user.id, slug_id=self.kwargs['slug']).first()
+        if not instance:
+            return Response({"message": "bookmark not found"})
+        self.perform_destroy(instance)
+        return Response({"message": "deleted"},
+                        status=status.HTTP_200_OK)
+
+
+class AllBookmarksView(generics.ListAPIView):
+    serializer_class = BookmarkSerializer
+    permission_classes = (IsAuthenticated,)
+    renderer_classes = (BookmarkJSONRenderer,)
+    queryset = Bookmark.objects.all()
+
+    def get(self, request, *args, **kwargs):
+        bookmarks = self.queryset.filter(
+            user_id=request.user)
+        serializer = self.serializer_class(bookmarks, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)

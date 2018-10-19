@@ -30,6 +30,13 @@ class CategoryJSONRenderer(AhJSONRenderer):
 class ReportArticleJSONRenderer(AhJSONRenderer):
     charset = 'utf-8'
     object_label = 'support'     
+class BookmarkJSONRenderer(AhJSONRenderer):
+    object_label = 'bookmark'
+
+
+class ShareArticleJSONRenderer(AhJSONRenderer):
+    charset = 'utf-8'
+    object_label = 'share'
 
 
 class ShareArticleJSONRenderer(AhJSONRenderer):
