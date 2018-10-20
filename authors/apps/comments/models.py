@@ -1,7 +1,7 @@
 from django.db import models
 from django.db.models.signals import post_save
 
-from authors.apps.articles.models import Article,LikeArticle
+from authors.apps.articles.models import Article, LikeArticle
 from authors.apps.authentication.models import User
 
 # Create your models here.
@@ -23,11 +23,14 @@ class Comment(models.Model):
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    article_section=models.TextField(blank=True,null=True) 
-    start_position=models.CharField(max_length=500,blank=True,null=True)
-    end_position=models.CharField(max_length=500,blank=True,null=True)
+    article_section = models.TextField(blank=True, null=True)
+    start_position = models.CharField(max_length=500, blank=True, null=True)
+    end_position = models.CharField(max_length=500, blank=True, null=True)
     likes_count = models.IntegerField(default=0)
-        
+
+    class Meta:
+        ordering = ['-created_at']
+
     def children(self):
         return Comment.objects.filter(parent=self)
 
@@ -50,6 +53,7 @@ def create_history(sender, **kwargs):
 
 
 post_save.connect(create_history, sender=Comment)
+
 
 class LikeComment(models.Model):
     """

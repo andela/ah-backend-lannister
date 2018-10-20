@@ -60,7 +60,8 @@ class CommentListCreateView(generics.ListCreateAPIView):
         slug = get_object_or_404(Article, slug=article_slug)
         comment = self.queryset.filter(slug=article_slug)
         serializer = self.serializer_class(comment, many=True)
-        return Response(serializer.data)
+        return self.list(request, *args, **kwargs)
+
 
 
 class CommentsView(generics.RetrieveUpdateDestroyAPIView):
@@ -101,7 +102,7 @@ class CommentsView(generics.RetrieveUpdateDestroyAPIView):
         return get_object_or_404(queryset, **filter)
 
 
-class CommentThreadListCreateView(generics.RetrieveAPIView):
+class CommentThreadListCreateView(generics.ListCreateAPIView):
     permission_classes = (IsAuthenticated,)
     serializer_class = CommentChildSerializer
     renderer_classes = (CommentThreadJSONRenderer,)
@@ -124,7 +125,7 @@ class CommentThreadListCreateView(generics.RetrieveAPIView):
         comment = self.queryset.filter(
             slug=article_slug, parent=self.kwargs['id'])
         serializer = self.serializer_class(comment, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        return self.list(request, *args, **kwargs)
 
 
 class CommentHistoryView(generics.ListAPIView):
