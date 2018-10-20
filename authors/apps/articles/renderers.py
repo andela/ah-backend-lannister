@@ -39,3 +39,8 @@ class ShareArticleJSONRenderer(AhJSONRenderer):
     object_label = 'share'
 
 
+class ShareArticleJSONRenderer(AhJSONRenderer):
+    charset = 'utf-8'
+    object_label = 'share'
+
+

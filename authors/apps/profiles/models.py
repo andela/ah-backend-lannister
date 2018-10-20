@@ -22,7 +22,7 @@ class Profile(models.Model):
         return self.user.username
     
     def toggleFollowing(self):
-        if self.following==True:
+        if self.following == True:
             return False
         return True
 

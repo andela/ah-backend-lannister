@@ -1,4 +1,4 @@
-import json
+import json 
 
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import JsonResponse
@@ -11,7 +11,8 @@ from rest_framework.permissions import (AllowAny, IsAdminUser, IsAuthenticated,
 from rest_framework.response import Response
 
 from taggit.models import Tag
-
+from django.core.mail import EmailMessage
+from rest_framework import generics, serializers, status
 from .exceptions import CatHasNoArticles, TagHasNoArticles
 from .models import (Article, Bookmark, Category, LikeArticle, RateArticle,
                      Reported)
@@ -25,6 +26,7 @@ from .serializers import (ArticleSerializer, BookmarkSerializer,
                           ReportSerializer, ShareEmailSerializer,
                           TagSerializer)
 from .utils import shareArticleMail
+from rest_framework.views import APIView
 
 
 class TagListAPIView(generics.ListAPIView):
@@ -84,7 +86,7 @@ class CategoryRetrieveAPIView(generics.RetrieveAPIView):
 
 class ArticleAPIView(generics.ListCreateAPIView):
     """create an article, list all articles paginated to 5 per page"""
-    queryset = Article.objects.all()
+    queryset = Article.objects.filter(is_published=True)
     permission_classes = (IsAuthenticatedOrReadOnly,)
     renderer_classes = (ArticleJSONRenderer,)
     serializer_class = ArticleSerializer
@@ -118,6 +120,64 @@ class ArticleAPIView(generics.ListCreateAPIView):
         return queryset
 
 
+class ArticleDraftAPIView(generics.ListAPIView):
+    """create an article, list all draft articles paginated to 5 per page"""
+    permission_classes = (IsAuthenticated,)
+    renderer_classes = (ArticleJSONRenderer,)
+    serializer_class = ArticleSerializer
+
+    def get_queryset(self):
+        auth_user = self.request.user
+        queryset = Article.objects.filter(
+            author_id=auth_user.id, is_published=False)
+        return queryset
+    
+    def list(self, request, *args, **kwargs):
+
+        queryset = self.filter_queryset(self.get_queryset())
+        if queryset.count() == 0:
+            return Response({"msg": "you have no articles"})
+        else:
+            page = self.paginate_queryset(queryset)
+            if page is not None:
+                serializer = self.get_serializer(page, many=True)
+                return self.get_paginated_response(serializer.data)
+        
+
+class ArticlePublishedAPIView(generics.ListAPIView):
+    permission_classes = (IsAuthenticated,)
+    renderer_classes = (ArticleJSONRenderer,)
+    serializer_class = ArticleSerializer
+
+    def get_queryset(self):
+        auth_user = self.request.user
+        queryset = Article.objects.filter(
+            author_id=auth_user.id, is_published=True)
+        return queryset
+    
+    def list(self, request, *args, **kwargs):
+        return ArticleDraftAPIView.list(self, request, *args, **kwargs)
+    
+        
+class ArticleAPIPublishView(generics.UpdateAPIView):
+    permission_classes = (IsAuthenticated,)
+    renderer_classes = (ArticleJSONRenderer,)
+    serializer_class = ArticleSerializer
+
+    def update(self, request, *args, **kwargs):
+        article = get_object_or_404(
+                Article, slug=self.kwargs['slug'], author_id=request.user.id)
+        
+        if not article.is_published:
+            article.is_published = True
+            article.save()
+            return Response(
+                {"message": "article published succesfully"}, status=status.HTTP_201_CREATED)
+        raise serializers.ValidationError(
+            'article already published'
+        )
+
+
 class ArticleAPIDetailsView(generics.RetrieveUpdateDestroyAPIView):
     """retreive, update and delete an article """
     permission_classes = (IsAuthenticatedOrReadOnly,)
@@ -146,7 +206,7 @@ class ArticleAPIDetailsView(generics.RetrieveUpdateDestroyAPIView):
         self.perform_update(serializer)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
-
+        
 class RateArticleView(ListCreateAPIView):
     permission_classes = (IsAuthenticated,)
     renderer_classes = (RateUserJSONRenderer,)

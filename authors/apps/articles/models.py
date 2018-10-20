@@ -62,6 +62,11 @@ class Article(models.Model):
                                  on_delete=models.CASCADE)
     times_reported = models.IntegerField(default=0)
 
+    is_published = models.BooleanField(default=False)
+
+    published_on = models.DateTimeField(
+        auto_created=True, auto_now=False, default=timezone.now)
+
     def __str__(self):
         """
         Returns a string representation of this `Article`.

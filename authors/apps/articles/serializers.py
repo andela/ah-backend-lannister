@@ -14,17 +14,18 @@ class ArticleSerializer(TaggitSerializer, serializers.ModelSerializer):
     author = serializers.ReadOnlyField(source='author.username')
     read_time = serializers.ReadOnlyField(source='read')
     tags = TagListSerializerField()
-
+    is_published = serializers.ReadOnlyField()
     class Meta:
         model = Article
         """ List all of the fields that could possibly be included in a request
         or response, including fields specified explicitly above."""
 
         fields = (
-            'author', 'title', 'slug', 'description', 'body', 'created_at',
-            'updated_at', 'read_time', 'average_rating', 'likes', 'dislikes',
-            'tags', 'category', 'favorites_count', 'image')
-        read_only_fields = ('slug', 'author_id',)
+            'author', 'title', 'slug', 'description', 'body', 'created_at', 
+            'updated_at', 'read_time', 'average_rating', 'likes', 'dislikes', 
+            'tags', 'category', 'favorites_count', 'image', 'published_on',
+            'is_published',)
+        read_only_fields = ('slug', 'author_id', 'is_published')
 
 
 class TagSerializer(serializers.ModelSerializer):
@@ -35,7 +36,6 @@ class TagSerializer(serializers.ModelSerializer):
 
 
 class CategorySerializer(serializers.ModelSerializer):
-
     class Meta:
         model = Category
         fields = ('id', 'title', 'slug')

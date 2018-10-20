@@ -6,12 +6,17 @@ from .views import (AllBookmarksView, ArticleAPIDetailsView, ArticleAPIView,
                     LikeAPIDetailsView, LikeArticleView, RateArticleView,
                     ReportArticle, ReportArticleListView, ReportView,
                     ShareArticleAPIView, TagListAPIView, TagRetrieveAPIView,
-                    UnBookmarkView, UnFavoriteArticleView)
+                    UnBookmarkView, UnFavoriteArticleView, ArticleDraftAPIView,
+                    ArticleAPIPublishView, ArticlePublishedAPIView)
 
 app_name = "articles"
 
 urlpatterns = [
     path("articles/", ArticleAPIView.as_view()),
+    path("me/articles/drafts/", ArticleDraftAPIView.as_view()),
+    path("me/articles/published/", ArticlePublishedAPIView.as_view()),
+    path('articles/<str:slug>/publish/', ArticleAPIPublishView.as_view(),
+         name='publish_article'),
     path('articles/<str:slug>/', ArticleAPIDetailsView.as_view(),
          name='retrieveUpdateDelete'),
     path('articles/<str:slug>/rating/', RateArticleView.as_view()),
