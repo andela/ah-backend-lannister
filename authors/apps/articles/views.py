@@ -1,5 +1,4 @@
 import json 
-
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
@@ -9,7 +8,6 @@ from rest_framework.generics import ListCreateAPIView
 from rest_framework.permissions import (AllowAny, IsAdminUser, IsAuthenticated,
                                         IsAuthenticatedOrReadOnly)
 from rest_framework.response import Response
-
 from taggit.models import Tag
 from django.core.mail import EmailMessage
 from rest_framework import generics, serializers, status
@@ -28,6 +26,12 @@ from .serializers import (ArticleSerializer, BookmarkSerializer,
 from .utils import shareArticleMail
 from rest_framework.views import APIView
 
+from .exceptions import TagHasNoArticles, CatHasNoArticles
+from .models import Article, LikeArticle, RateArticle, Category
+from rest_framework import filters
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+from authors.apps.notifications.models import notify_follower
 
 class TagListAPIView(generics.ListAPIView):
     """ List all tags  """
@@ -56,7 +60,7 @@ class CategoryListCreateAPIView(generics.ListCreateAPIView):
     """ List / Create categories """
 
     queryset = Category.objects.all()
-    permission_classes = (AllowAny,)
+    permission_classes = (IsAuthenticated,)
     serializer_class = CategorySerializer
     renderer_classes = (CategoryJSONRenderer,)
 
@@ -71,7 +75,7 @@ class CategoryListCreateAPIView(generics.ListCreateAPIView):
 
 class CategoryRetrieveAPIView(generics.RetrieveAPIView):
     """ Get articles under a specific category """
-    permission_classes = (AllowAny,)
+    permission_classes = (IsAuthenticated,)
     serializer_class = ArticleSerializer
 
     def retrieve(self, request, *args, **kwargs):
@@ -118,6 +122,16 @@ class ArticleAPIView(generics.ListCreateAPIView):
         if title is not None:
             queryset = queryset.filter(title__icontains=title)
         return queryset
+
+@receiver(post_save, sender=Article)
+def notify_follower_reciever(sender, instance, created, **kwargs):
+    """
+    Send a notification after the article being created is saved.
+    """
+    if created:
+        message = ("Author " + instance.author.username +
+                   " has published an article. Title: " + instance.title)
+        notify_follower(instance.author, message, instance)
 
 
 class ArticleDraftAPIView(generics.ListAPIView):

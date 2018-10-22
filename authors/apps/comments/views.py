@@ -14,6 +14,11 @@ from .renderer import (CommentHistoryJSONRenderer, CommentJSONRenderer,
                        CommentThreadJSONRenderer)
 from .serializers import (CommentChildSerializer, CommentHistorySerializer,
                           CommentSerializer, LikeCommentSerializer)
+                          
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+from authors.apps.profiles.models import Profile
+from authors.apps.notifications.models import notify_comment_follower
 
 
 class CommentListCreateView(generics.ListCreateAPIView):
@@ -62,6 +67,20 @@ class CommentListCreateView(generics.ListCreateAPIView):
         serializer = self.serializer_class(comment, many=True)
         return self.list(request, *args, **kwargs)
 
+
+@receiver(post_save, sender=Comment)
+def notify_follower_reciever(sender, instance, created, **kwargs):
+    """
+    Send a notification after the article being created is saved.
+    """
+    if created:
+        message = (instance.author.username +
+                   " has commented on an article that you favorited.")
+        #import pdb;pdb.set_trace()
+        
+        article_id=instance.slug.id
+
+        notify_comment_follower(article_id, message, instance)
 
 
 class CommentsView(generics.RetrieveUpdateDestroyAPIView):

@@ -10,9 +10,6 @@ from .exceptions import ProfileDoesNotExist
 from rest_framework.exceptions import PermissionDenied, ValidationError
 import jwt
 from decouple import config, Csv
-
-from .utils import (get_followed_user, get_following_user,
-                    get_following_each_other)
 from authors.apps.authentication.models import User
 
 
@@ -81,16 +78,7 @@ class RetriveProfilesView(RetrieveAPIView):
     serializer_class = ProfilesSerializers
 
     def retrieve(self, request, *args, **kwargs):
-        
-        try:
-
-            profiles = Profile.objects.all()
-        
-        except Profile.DoesNotExist:
-            raise ProfileDoesNotExist
-
-            
-
+        profiles = Profile.objects.all()
         serializer = self.serializer_class(profiles, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 

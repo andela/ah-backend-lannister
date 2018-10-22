@@ -2,3 +2,4 @@
 omit =
     */settings/*
     */wsgi.py
+    authors/apps/notifications/cron_job.py 

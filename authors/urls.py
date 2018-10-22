@@ -18,8 +18,10 @@ from django.urls import include, path
 from django.views.generic.base import RedirectView
 from rest_framework.documentation import include_docs_urls
 from rest_framework_swagger.views import get_swagger_view
+import debug_toolbar
 
 schema_view = get_swagger_view(title="Authors Haven API ")
+
 
 
 urlpatterns = [
@@ -30,9 +32,12 @@ urlpatterns = [
     path('api/', include('authors.apps.profiles.urls', namespace='profiles')),
     path('api/', include('authors.apps.articles.urls', namespace='articles')),
     path('api/articles/', include('authors.apps.comments.urls', namespace='comments')),
+    path('api/notifications/', include('authors.apps.notifications.urls', namespace='notifications')),
 
     path('', RedirectView.as_view(url='coreapi-docs/'), name='index'),
     path('swagger-docs/', schema_view),
     path('coreapi-docs/', include_docs_urls(title='Authors Haven API')),
-
+    path('__debug__/', include(debug_toolbar.urls)),
+    
 ]
+
