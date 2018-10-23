@@ -14,13 +14,16 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
-from django.urls import include, path
+from django.urls import include, path, re_path
 from django.views.generic.base import RedirectView
 from rest_framework.documentation import include_docs_urls
 from rest_framework_swagger.views import get_swagger_view
 import debug_toolbar
 
 schema_view = get_swagger_view(title="Authors Haven API ")
+from authors.apps.social_auth.views import (FacebookLogin,
+                                            TwitterLogin,
+                                            GoogleLogin)
 
 
 
@@ -39,5 +42,15 @@ urlpatterns = [
     path('coreapi-docs/', include_docs_urls(title='Authors Haven API')),
     path('__debug__/', include(debug_toolbar.urls)),
     
+    
+    path('rest-auth/', include('rest_auth.urls')),
+    path('rest-auth/registration/', include('rest_auth.registration.urls')),
+    path('rest-auth/google/', GoogleLogin.as_view(), name='google_login'),
+    path('rest-auth/facebook/', FacebookLogin.as_view(), name='fb_login'),
+    path('rest-auth/twitter/', TwitterLogin.as_view(), name='twitter_login'),
+    # path('accounts/login/', include('authors.apps.social_auth.urls')),
+    path('accounts/', include('allauth.urls')),
+
+
 ]
 

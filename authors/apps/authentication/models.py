@@ -56,6 +56,9 @@ class User(AbstractBaseUser, PermissionsMixin):
     # represent the `User` in the UI. We want to index this column in the
     # database to improve lookup performance.
     username = models.CharField(db_index=True, max_length=255, unique=True)
+    first_name = models.CharField( max_length=255, blank=True)
+    last_name = models.CharField( max_length=255, blank=True)
+
 
     # We also need a way to contact the user and a way for the user to identify
     # themselves when logging in. Since we need an email address for contacting
