@@ -32,6 +32,7 @@ from rest_framework import filters
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from authors.apps.notifications.models import notify_follower
+from authors.apps.comments.views import CommentListCreateView as Paginator
 
 class TagListAPIView(generics.ListAPIView):
     """ List all tags  """
@@ -152,9 +153,8 @@ class ArticleDraftAPIView(generics.ListAPIView):
         if queryset.count() == 0:
             return Response({"msg": "you have no articles"})
         else:
-            page = self.paginate_queryset(queryset)
-            if page is not None:
-                serializer = self.get_serializer(page, many=True)
+            serializer=Paginator.paginate(self,queryset)
+            if serializer:
                 return self.get_paginated_response(serializer.data)
         
 

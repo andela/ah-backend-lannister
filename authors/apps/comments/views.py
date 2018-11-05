@@ -14,7 +14,7 @@ from .renderer import (CommentHistoryJSONRenderer, CommentJSONRenderer,
                        CommentThreadJSONRenderer)
 from .serializers import (CommentChildSerializer, CommentHistorySerializer,
                           CommentSerializer, LikeCommentSerializer)
-                          
+
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from authors.apps.profiles.models import Profile
@@ -30,7 +30,6 @@ class CommentListCreateView(generics.ListCreateAPIView):
     permission_classes = (IsAuthenticated,)
     renderer_classes = (CommentJSONRenderer,)
     queryset = Comment.objects.all().filter(parent=None)
-    queryset = Comment.objects.all()
     lookup_field = 'slug'
 
     def post(self, request, *args, **kwargs):
@@ -64,8 +63,19 @@ class CommentListCreateView(generics.ListCreateAPIView):
         article_slug = self.kwargs['slug']
         slug = get_object_or_404(Article, slug=article_slug)
         comment = self.queryset.filter(slug=article_slug)
-        serializer = self.serializer_class(comment, many=True)
-        return self.list(request, *args, **kwargs)
+        queryset = self.filter_queryset(comment)
+        serializer=self.paginate(queryset)
+        if serializer:
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+
+    def paginate(self, queryset):
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+        return serializer
 
 
 @receiver(post_save, sender=Comment)
@@ -77,8 +87,8 @@ def notify_follower_reciever(sender, instance, created, **kwargs):
         message = (instance.author.username +
                    " has commented on an article that you favorited.")
         #import pdb;pdb.set_trace()
-        
-        article_id=instance.slug.id
+
+        article_id = instance.slug.id
 
         notify_comment_follower(article_id, message, instance)
 
@@ -143,8 +153,14 @@ class CommentThreadListCreateView(generics.ListCreateAPIView):
         slug = get_object_or_404(Article, slug=article_slug)
         comment = self.queryset.filter(
             slug=article_slug, parent=self.kwargs['id'])
-        serializer = self.serializer_class(comment, many=True)
-        return self.list(request, *args, **kwargs)
+        queryset = self.filter_queryset(comment)
+
+        serializer=CommentListCreateView.paginate(self,queryset)
+        if serializer:
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
 
 
 class CommentHistoryView(generics.ListAPIView):

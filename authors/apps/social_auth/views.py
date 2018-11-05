@@ -12,11 +12,13 @@ from rest_auth.social_serializers import TwitterLoginSerializer
 from authors.apps.authentication.serializers import RegistrationSerializer,LoginSerializer
 from .serializers import FbRegisterSerializer
 import json
+from authors.apps.authentication.renderers import UserJSONRenderer
 
 class FacebookLogin(SocialLoginView):
     adapter_class = FacebookOAuth2Adapter
     client_class = OAuth2Client
     FbRegSerializer_class=FbRegisterSerializer
+    renderer_classes = (UserJSONRenderer,)
     
     def post(self, request):
         data=request.data
@@ -29,30 +31,25 @@ class FacebookLogin(SocialLoginView):
 
         data={
                 "password": 'Ah123456789@',
-                "username": i['name'],
-                "email": i['email'],
+                "username": i.get('name'),
+                "email": i.get('email'),
                 }
-        
-
-        if not User.objects.filter(email=i['email']).exists():
+        if not User.objects.filter(email=i.get('email')).exists():
             
             serializer=self.FbRegSerializer_class(data=data)
             serializer.is_valid(raise_exception=True)
             serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
 
-        else:
-            loginserializer=LoginSerializer(data=data)
-            loginserializer.is_valid(raise_exception=True)
-            import pdb; pdb.set_trace()
-            return Response("logged in")
+        loginserializer=LoginSerializer(data=data)
+        loginserializer.is_valid(raise_exception=True)
+        return Response(loginserializer.data)
 
-        return Response(i, status=status.HTTP_200_OK)
 
         
 class GoogleLogin(SocialLoginView):
     adapter_class = GoogleOAuth2Adapter
     client_class = OAuth2Client
-    callback_url = 'localhost:8000'
 
 
 class TwitterLogin(SocialLoginView):
