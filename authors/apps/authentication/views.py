@@ -150,10 +150,11 @@ class UserPasswordReset(RetrieveUpdateAPIView):
         data_from_serializer.is_valid(raise_exception=True)
 
         # send email method
-        url = request.get_host()
         email = data_from_serializer.data['email']
         token = data_from_serializer.data['token']
-        response = send_gridmail(email, token, url)
+        host='http://'+request.get_host()+'/api/users/password_reset/confirm/'
+        url=user.get('url',host)+token
+        response = send_gridmail(email,url)
         return Response(response, status=status.HTTP_200_OK)
 
     def retrieve(self, request,token, *args, **kwargs):
