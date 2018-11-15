@@ -28,8 +28,7 @@ class AccountVerification(APITestCase,BaseTest):
         user1 = User.objects.get(email='kfddfssss@andela.com')
         res = user1.is_verified
         self.assertTrue(res)
-        self.assertIn("message", str(respond.data))
-        self.assertEqual(status.HTTP_200_OK,respond.status_code)
+        self.assertEqual(status.HTTP_302_FOUND, respond.status_code)
 
     def test_failed_verify_account(self):
         self.user = User.objects.get(email=self.email)

@@ -27,7 +27,7 @@ class CommentListCreateView(generics.ListCreateAPIView):
 
     """
     serializer_class = CommentSerializer
-    permission_classes = (IsAuthenticated,)
+    permission_classes = (IsAuthenticatedOrReadOnly,)
     renderer_classes = (CommentJSONRenderer,)
     queryset = Comment.objects.all().filter(parent=None)
     lookup_field = 'slug'
@@ -95,7 +95,7 @@ def notify_follower_reciever(sender, instance, created, **kwargs):
 
 class CommentsView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = CommentSerializer
-    permission_classes = (IsAuthenticated,)
+    permission_classes = (IsAuthenticatedOrReadOnly,)
     renderer_classes = (CommentJSONRenderer,)
     lookup_fields = 'id', 'slug'
     queryset = Comment.objects.all().filter(parent__isnull=True)
@@ -132,7 +132,7 @@ class CommentsView(generics.RetrieveUpdateDestroyAPIView):
 
 
 class CommentThreadListCreateView(generics.ListCreateAPIView):
-    permission_classes = (IsAuthenticated,)
+    permission_classes = (IsAuthenticatedOrReadOnly,)
     serializer_class = CommentChildSerializer
     renderer_classes = (CommentThreadJSONRenderer,)
     lookup_fields = 'id', 'slug'

@@ -12,9 +12,11 @@ from taggit_serializer.serializers import (TaggitSerializer,
 class ArticleSerializer(TaggitSerializer, serializers.ModelSerializer):
     """Serializer for articles."""
     author = serializers.ReadOnlyField(source='author.username')
+    category_title = serializers.ReadOnlyField(source='category.title')
     read_time = serializers.ReadOnlyField(source='read')
     tags = TagListSerializerField()
     is_published = serializers.ReadOnlyField()
+
     class Meta:
         model = Article
         """ List all of the fields that could possibly be included in a request
@@ -24,7 +26,7 @@ class ArticleSerializer(TaggitSerializer, serializers.ModelSerializer):
             'author', 'title', 'slug', 'description', 'body', 'created_at', 
             'updated_at', 'read_time', 'average_rating', 'likes', 'dislikes', 
             'tags', 'category', 'favorites_count', 'image', 'published_on',
-            'is_published',)
+            'is_published', 'category_title')
         read_only_fields = ('slug', 'author_id', 'is_published')
 
 
