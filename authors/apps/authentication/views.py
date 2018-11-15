@@ -7,6 +7,7 @@ from rest_framework.generics import RetrieveUpdateAPIView, UpdateAPIView
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from django.shortcuts import redirect
 
 from authors.apps.authentication.backends import JWTAuthentication
 from authors.apps.authentication.models import User
@@ -45,13 +46,14 @@ class RegistrationAPIView(APIView):
         username = user['username']
         subject = "Ah haven Account Verification"
         body = "Hello {}, Thank you for creating an account with us, kindly click on the link below to activate your account! \n\n \
-                {}/api/users/verify_account/{}/" .format(username,request.get_host(), user_data['token'])
+                {}/api/users/verify_account/{}/" .format(username, request.get_host(), user_data['token'])
         to_email = [user["email"]]
         email = EmailMessage(subject, body, to=to_email,)
         email.send()
         user_data.update({
             'message': 'A verification link has been sent to your Email, please visit your Email and activate your account'
                     })
+        
         
 class LoginAPIView(APIView):
 
@@ -110,7 +112,8 @@ class UserRetrieveUpdateAPIView(RetrieveUpdateAPIView):
 
         return Response(serializer.data, status=status.HTTP_200_OK)
     
-class UserAccountVerifyView(APIView,JWTAuthentication):
+
+class UserAccountVerifyView(APIView, JWTAuthentication):
     """
     get user email:
     send verification link to the user email.
@@ -118,16 +121,15 @@ class UserAccountVerifyView(APIView,JWTAuthentication):
     """
     renderer_classes = (UserJSONRenderer,)
     serializer_class = UserSerializer
+
     def get(self, request, token):
        
         try:
             user, user_token = self.authenticate_credentials(request, token)
             if not user.is_verified:
-                user.is_verified=True
+                user.is_verified = True
                 user.save()
-                return Response({
-                    'message': 'Your Account has been verified, continue to login',
-                    }, status=status.HTTP_200_OK)
+                return redirect('https://ah-frontend-lannister.herokuapp.com/login')
 
             raise serializers.ValidationError(
                 'Activation link invalid or expired'
@@ -137,11 +139,11 @@ class UserAccountVerifyView(APIView,JWTAuthentication):
                 'Activation link invalid or expired'
             )
 
+
 class UserPasswordReset(RetrieveUpdateAPIView):
     permission_classes = (AllowAny,)
     renderer_classes = (UserJSONRenderer,)
     serializer_class = PasswordResetSerializer
-
 
     def post(self, request):
         user = request.data.get('user', {})
@@ -152,12 +154,12 @@ class UserPasswordReset(RetrieveUpdateAPIView):
         # send email method
         email = data_from_serializer.data['email']
         token = data_from_serializer.data['token']
-        host='http://'+request.get_host()+'/api/users/password_reset/confirm/'
-        url=user.get('url',host)+token
-        response = send_gridmail(email,url)
+        host = 'http://'+request.get_host()+'/api/users/password_reset/confirm/'
+        url = user.get('url', host)+token
+        response = send_gridmail(email, url)
         return Response(response, status=status.HTTP_200_OK)
 
-    def retrieve(self, request,token, *args, **kwargs):
+    def retrieve(self, request, token, *args, **kwargs):
         url = request.get_host()
         #validate url here if its valid ie token
         # else send them invalid token message

@@ -58,8 +58,7 @@ class ProfileSerializer(serializers.ModelSerializer):
 
 
 class CommentChildSerializer(serializers.ModelSerializer):
-    author = serializers.ReadOnlyField(source='author.username')
-
+    author = serializers.SerializerMethodField()
     class Meta:
         model = Comment
         fields = ('id', 'body', 'author', 'created_at', 'updated_at', 'parent')
@@ -71,6 +70,10 @@ class CommentChildSerializer(serializers.ModelSerializer):
                 'Please insert the body of the comment'
             )
         return data
+        
+    def get_author(self, obj):
+        x = get_object_or_404(Profile, user=obj.author)
+        return ProfileSerializer(x).data
 
 
 class CommentHistorySerializer(serializers.ModelSerializer):
