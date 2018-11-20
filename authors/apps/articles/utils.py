@@ -40,12 +40,12 @@ def time(string, image=0):
 
 def shareArticleMail(share, request, share_data, article):
         user_instance = request.user
-        host = request.get_host()
+        host = "https://ah-frontend-lannister.herokuapp.com"
         user = user_instance.username
         subject = article.title
         share_slug = article.slug
         body = 'Click on the link below to view Article! \n\n \
-                {}/api/articles/{}/ \n\n shared by [ {} ]'.format(
+                {}/view-article/{} \n\n shared by [ {} ]'.format(
                     host, share_slug, user)
         to_email = [share['email']]
         email = EmailMessage(subject, body, to=to_email,)
